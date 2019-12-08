@@ -1,0 +1,18 @@
+{
+  "extends": ["tslint-config-prettier", "tslint-plugin-prettier"],
+  "linterOptions": {
+    "exclude": ["**/*.d.ts", "node_modules/**"]
+  },
+  "rules": {
+    "prettier": [
+      true,
+      {
+        "singleQuote": true,
+        "printWidth": 100,
+        "trailingComma": "all"
+      }
+    ],
+    "newline-before-return": true,
+    "interface-name": true
+  }
+}
