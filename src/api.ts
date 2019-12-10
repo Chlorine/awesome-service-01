@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 
 import { Database } from './db/db';
 import { GenericObject } from './common-front';
+import { ResultsPromise, Results, Params } from './common-api';
 
 export interface IApiRequest {
   source: 'http' | 'ws' | 'other';
@@ -84,9 +85,14 @@ export class API extends EventEmitter {
 class ApiImpl {
   constructor(private readonly db: Database) {}
 
-  async doSomething() {
+  async doSomething(params: Params<'doSomething'>): ResultsPromise<'doSomething'> {
     return {
-      success: true,
+      code: 420,
+    };
+  }
+
+  async doSomethingElse(params: Params<'doSomethingElse'>): ResultsPromise<'doSomethingElse'> {
+    return {
       code: 420,
     };
   }
