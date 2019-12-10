@@ -20,6 +20,10 @@ export const routeApi = (api: API): Router => {
     .use(bodyParser.json({ limit: '17mb' }))
     .post('/execute', ensureAuth, (req: Request, res: Response) => {
       const { action } = req.body;
+
+      // TODO: logger
+      console.log(`routeApi.execute ${JSON.stringify(req.body)}`);
+
       api
         .execute({
           action,
@@ -43,6 +47,9 @@ export const routeApi = (api: API): Router => {
 
   // 500
   r.use((err: HttpErrors.HttpError, req: Request, res: Response, next: NextFunction) => {
+    // TODO: logger
+    console.error(`routeApi error: ${err.status} ${err.message}`);
+
     res.status(err.status || 500);
     res.send(API.makeResponse(err));
   });

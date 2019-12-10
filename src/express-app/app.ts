@@ -21,13 +21,23 @@ export function createExpressApp(params: ExpressAppParams): ExpressApp {
   const app = express();
 
   app
+    .use((req: Request, res: Response, next: NextFunction) => {
+      // TODO: logger
+
+      console.log(
+        `expressApp: method=${req.method} hostname=${req.hostname} path=${
+          req.path
+        } headers=${JSON.stringify(req.headers)}`,
+      );
+      next();
+    })
     .use('/', createMainRouter({ cookieSecret, routes }))
     // 404
     .use((req: Request, res: Response, next: NextFunction) => {
-      if (req.method === 'GET') {
-        // на react-морду
-        return res.redirect(`/?redirectTo=${req.path}`);
-      }
+      // if (req.method === 'GET') {
+      //   // на react-морду, если мы ее отдаем где-то рядом через serve-static
+      //   return res.redirect(`/?redirectTo=${req.path}`);
+      // }
 
       const err = new HttpErrors.NotFound(`Страница "${req.url}" не найдена`);
       next(err);
@@ -52,6 +62,7 @@ export function createExpressApp(params: ExpressAppParams): ExpressApp {
     });
 
   const httpServer = app.listen(httpPort, () => {
+    // TODO: logger
     console.log(`Main http server is listening on port ${httpPort}`);
   });
 

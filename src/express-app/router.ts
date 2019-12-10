@@ -1,10 +1,12 @@
-import * as path from 'path';
+// import * as path from 'path';
 import * as express from 'express';
 import { Router } from 'express';
 import * as session from 'express-session';
 
 import { ServeStaticOptions } from 'serve-static';
 import { MemoryStore } from 'express-session';
+import { Request } from 'express';
+import { Response } from 'express';
 
 export type MainRouterParams = {
   cookieSecret: string;
@@ -24,7 +26,7 @@ export function createMainRouter(params: MainRouterParams): Router {
   };
 
   router
-    .use(express.static(path.join(__dirname, '../../public'), staticOptions))
+    // .use(express.static(path.join(__dirname, '../../public'), staticOptions))
 
     .use(
       session({
@@ -38,6 +40,12 @@ export function createMainRouter(params: MainRouterParams): Router {
 
   routes.forEach(r => {
     router.use(r.path, r.routeMatcher);
+  });
+
+  router.use('*', (req: Request, res: Response) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.write('Hello! This is an API gateway. Nothing interesting here!');
+    res.end();
   });
 
   return router;
