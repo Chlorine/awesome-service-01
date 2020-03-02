@@ -3,6 +3,7 @@ public/
 
 *.js
 *.d.ts
+!ecosystem.config.js
 
 # Logs
 logs
