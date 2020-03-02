@@ -1,0 +1,40 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Параметры запроса на регистрацию посетителя",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "firstName",
+    "middleName",
+    "lastName",
+    "companyName",
+    "position"
+  ],
+  "properties": {
+    "firstName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "middleName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "lastName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "companyName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "position": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255
+    }
+  }
+}

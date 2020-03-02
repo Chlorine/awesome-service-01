@@ -1,8 +1,9 @@
+declare type NoParams = {};
+declare type OnlySuccess = {};
+
 export type ApiActions = {
   doSomething: {
-    params: {
-      // none
-    };
+    params: NoParams;
     results: {
       code: number;
     };
@@ -11,8 +12,18 @@ export type ApiActions = {
     params: {
       incomingToken: string;
     };
+    results: OnlySuccess;
+  };
+  registerVisitor: {
+    params: {
+      firstName: string;
+      middleName: string;
+      lastName: string;
+      companyName: string;
+      position: string;
+    };
     results: {
-      // just 'success'
+      visitorId: string;
     };
   };
 };

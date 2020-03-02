@@ -4,7 +4,6 @@ import { Core } from './src/core';
   const core = new Core();
   await core.init();
 })().catch(err => {
-  // TODO: logger
   console.error('Service init failed', err);
   process.exit(1);
 });

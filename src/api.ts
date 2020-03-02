@@ -4,6 +4,8 @@ import { EventEmitter } from 'events';
 import { Database } from './db/db';
 import { GenericObject } from './common-front';
 import { ResultsPromise, Results, Params } from './common-api';
+import { getLogger, LogHelper } from './utils/logger';
+import { JsonValidators } from './utils/json-validator';
 
 export interface IApiRequest {
   source: 'http' | 'ws' | 'other';
@@ -24,8 +26,8 @@ export interface IApiResponse {
 
 export class API extends EventEmitter {
   readonly impl: ApiImpl;
-  // readonly logger = getLogger('API');
-  // private validators = new JsonValidators('./src/json-schemes/api');
+  readonly logger = getLogger('API');
+  private validators = new JsonValidators('./src/json-schemes/api');
 
   constructor(db: Database) {
     super();
@@ -46,7 +48,7 @@ export class API extends EventEmitter {
   }
 
   async execute(request: IApiRequest): Promise<IApiResponse> {
-    // const lh = new LogHelper(this, 'execute');
+    const lh = new LogHelper(this, 'execute');
 
     let response: IApiResponse | undefined;
     let error: Error;
@@ -55,21 +57,22 @@ export class API extends EventEmitter {
 
     if (!action || typeof action !== 'string') {
       error = new Error('Отсутствует необходимый строковый параметр "action"');
-      // lh.onError(error, { noStack: true });
+      lh.onError(error, { noStack: true });
       response = API.makeResponse(error);
     } else if (typeof handlers[action] !== 'function') {
       error = new Error(`Неизвестный метод "${action}"`);
-      // lh.onError(error, { noStack: true });
+      lh.onError(error, { noStack: true });
       response = API.makeResponse(error);
     } else {
       try {
         // this.validators.validate(action, request.params);
+        this.validators.hasValidatorFor(action) && this.validators.validate(action, request.params);
         response = API.makeResponse(
           await handlers[action](request.params, request.currentUser, request.remoteAddress),
         );
-        // lh.onSuccess(`[${request.source}|${action}]: OK`);
+        lh.onSuccess(`[${request.source}|${action}]: OK`);
       } catch (err) {
-        // lh.onError(err);
+        lh.onError(err);
         response = API.makeResponse(err);
       }
     }
@@ -92,8 +95,28 @@ class ApiImpl {
   }
 
   async doSomethingElse(params: Params<'doSomethingElse'>): ResultsPromise<'doSomethingElse'> {
+    const { incomingToken } = params;
+
+    if (incomingToken === 'die') {
+      let error = new Error('Self-destruct command received');
+      // @ts-ignore
+      error.__selfDestruct = true;
+
+      setTimeout(() => {
+        throw new Error('CHPOK!');
+      }, 30);
+
+      throw error;
+    }
+
     return {
       code: 420,
+    };
+  }
+
+  async registerVisitor(params: Params<'registerVisitor'>): ResultsPromise<'registerVisitor'> {
+    return {
+      visitorId: 'AAA555',
     };
   }
 }

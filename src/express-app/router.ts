@@ -1,22 +1,25 @@
-// import * as path from 'path';
+import * as path from 'path';
 import * as express from 'express';
 import { Router } from 'express';
+import * as bodyParser from 'body-parser';
 import * as session from 'express-session';
 
 import { ServeStaticOptions } from 'serve-static';
-import { MemoryStore } from 'express-session';
+
 import { Request } from 'express';
 import { Response } from 'express';
+import { configurePassport, IPassportAuthSource } from './passport';
 
 export type MainRouterParams = {
+  passportAuthSource: IPassportAuthSource;
+  sessionStore: any;
   cookieSecret: string;
   routes: { path: string; routeMatcher: Router }[];
 };
 
 export function createMainRouter(params: MainRouterParams): Router {
   const router = express.Router();
-  // const { passportAuthSource, routes, cookieSecret, sessionStore } = params;
-  const { cookieSecret, routes } = params;
+  const { passportAuthSource, routes, cookieSecret, sessionStore } = params;
 
   const staticOptions: ServeStaticOptions = {
     dotfiles: 'ignore',
@@ -26,17 +29,22 @@ export function createMainRouter(params: MainRouterParams): Router {
   };
 
   router
-    // .use(express.static(path.join(__dirname, '../../public'), staticOptions))
-
+    .use(express.static(path.join(__dirname, '../../public'), staticOptions))
+    .use(bodyParser.json({ limit: '17mb' }))
+    .use(bodyParser.urlencoded({ extended: false }))
     .use(
       session({
         secret: cookieSecret,
-        resave: true,
+        resave: false,
+        rolling: true,
         saveUninitialized: false,
         cookie: { maxAge: 48 * 60 * 60 * 1000 },
-        store: new MemoryStore(),
+        store: sessionStore,
       }),
     );
+
+  const passport = configurePassport(passportAuthSource);
+  router.use(passport.initialize()).use(passport.session());
 
   routes.forEach(r => {
     router.use(r.path, r.routeMatcher);
