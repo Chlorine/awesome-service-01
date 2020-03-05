@@ -3,6 +3,8 @@ import * as SocketIO from 'socket.io';
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
+import { MongoClient, MongoClientOptions } from 'mongodb';
+
 import { createExpressApp } from './express-app/app';
 import { Database, db } from './db/db';
 
@@ -12,9 +14,11 @@ import { getLogger, LogHelper } from './utils/logger';
 
 import CONFIG from './../config';
 
-import { GenericObject } from './common-front';
+import { GenericObject } from './interfaces/common-front';
 import { IUser, WSMessagePayload } from './interfaces/common-front';
 import { WebSocket, wsEmitTo } from './express-app/ws';
+import { VisitorsDatabase } from './visitors/visitors-db';
+import { Env } from './utils/env';
 
 const SocketNamespaces = {
   DEFAULT: '/default',
@@ -35,14 +39,15 @@ declare interface _StronglyTypedEmitter {
 export class Core extends EventEmitter {
   logger = getLogger('Core');
   db: Database;
-  api: API;
+  api: API | undefined;
   wsServer: SocketIO.Server | undefined;
+  mongoClient: MongoClient | undefined;
+  vdb: VisitorsDatabase | undefined;
 
   constructor() {
     super();
 
     this.db = db;
-    this.api = new API(this.db);
   }
 
   private async tempDoAuth(
@@ -81,6 +86,36 @@ export class Core extends EventEmitter {
 
     try {
       await this.db.init();
+      lh.write('db connected');
+
+      let mongoClientOpts: MongoClientOptions = {
+        useUnifiedTopology: true,
+        appname: 'awesome-service-01',
+      };
+
+      if (Env.getBool('USE_HARDCODED_MONGO_AUTH', false)) {
+        mongoClientOpts = {
+          ...mongoClientOpts,
+          ...{
+            authSource: 'admin',
+            authMechanism: 'SCRAM-SHA-1',
+            auth: {
+              user: 'admin',
+              password: 'ticket1soft',
+            },
+          },
+        };
+      }
+
+      this.mongoClient = new MongoClient(`mongodb://localhost:27017`, mongoClientOpts);
+
+      await this.mongoClient.connect();
+      lh.write('mongo connected');
+
+      this.vdb = new VisitorsDatabase(this.mongoClient);
+      await this.vdb.init();
+
+      this.api = new API(this.vdb);
 
       const apiUrls = ['/api'];
 

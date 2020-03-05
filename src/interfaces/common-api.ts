@@ -1,3 +1,5 @@
+import { MinimalVisitorInfo } from './common-front';
+
 declare type NoParams = {};
 declare type OnlySuccess = {};
 
@@ -16,11 +18,9 @@ export type ApiActions = {
   };
   registerVisitor: {
     params: {
-      firstName: string;
-      middleName: string;
-      lastName: string;
-      companyName: string;
-      position: string;
+      visitor: MinimalVisitorInfo;
+      phone: string;
+      email: string;
     };
     results: {
       visitorId: string;

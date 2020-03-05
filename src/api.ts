@@ -1,11 +1,13 @@
 import { EventEmitter } from 'events';
-// import * as _ from 'lodash';
+import { MongoClient, Db as MongoDatabase } from 'mongodb';
+import * as _ from 'lodash';
 
 import { Database } from './db/db';
-import { GenericObject } from './common-front';
-import { ResultsPromise, Results, Params } from './common-api';
+import { GenericObject } from './interfaces/common-front';
+import { ResultsPromise, Results, Params } from './interfaces/common-api';
 import { getLogger, LogHelper } from './utils/logger';
 import { JsonValidators } from './utils/json-validator';
+import { VisitorsDatabase } from './visitors/visitors-db';
 
 export interface IApiRequest {
   source: 'http' | 'ws' | 'other';
@@ -27,11 +29,12 @@ export interface IApiResponse {
 export class API extends EventEmitter {
   readonly impl: ApiImpl;
   readonly logger = getLogger('API');
+
   private validators = new JsonValidators('./src/json-schemes/api');
 
-  constructor(db: Database) {
+  constructor(vdb: VisitorsDatabase) {
     super();
-    this.impl = new ApiImpl(db);
+    this.impl = new ApiImpl(vdb);
   }
 
   static makeResponse(src?: GenericObject | Error): IApiResponse {
@@ -86,7 +89,7 @@ export class API extends EventEmitter {
 }
 
 class ApiImpl {
-  constructor(private readonly db: Database) {}
+  constructor(private readonly vdb: VisitorsDatabase) {}
 
   async doSomething(params: Params<'doSomething'>): ResultsPromise<'doSomething'> {
     return {
@@ -99,8 +102,6 @@ class ApiImpl {
 
     if (incomingToken === 'die') {
       let error = new Error('Self-destruct command received');
-      // @ts-ignore
-      error.__selfDestruct = true;
 
       setTimeout(() => {
         throw new Error('CHPOK!');
@@ -115,8 +116,15 @@ class ApiImpl {
   }
 
   async registerVisitor(params: Params<'registerVisitor'>): ResultsPromise<'registerVisitor'> {
+    // TODO: дополнить json scheme по поводу паттернов мыла и телефона
+    // TODO: собрать инфу о http-клиенте
+
+    const { visitor, phone, email } = params;
+
+    console.log(JSON.stringify(params, null, 2));
+
     return {
-      visitorId: 'AAA555',
+      visitorId: await this.vdb.registerVisitor(visitor, phone, email),
     };
   }
 }

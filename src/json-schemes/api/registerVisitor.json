@@ -3,38 +3,55 @@
   "title": "Параметры запроса на регистрацию посетителя",
   "type": "object",
   "additionalProperties": true,
-  "required": [
-    "firstName",
-    "middleName",
-    "lastName",
-    "companyName",
-    "position"
-  ],
+  "required": ["visitor", "phone", "email"],
   "properties": {
-    "firstName": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 255
+    "visitor": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "firstName",
+        "middleName",
+        "lastName",
+        "companyName",
+        "position"
+      ],
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "middleName": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 64
+        },
+        "lastName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "companyName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "position": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      }
     },
-    "middleName": {
+    "phone": {
       "type": "string",
-      "minLength": 1,
-      "maxLength": 255
+      "minLength": 0,
+      "maxLength": 64
     },
-    "lastName": {
+    "email": {
       "type": "string",
-      "minLength": 1,
-      "maxLength": 255
-    },
-    "companyName": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 255
-    },
-    "position": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 255
+      "minLength": 0,
+      "maxLength": 64
     }
   }
 }
