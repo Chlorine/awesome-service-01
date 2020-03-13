@@ -8,6 +8,7 @@ import { ResultsPromise, Results, Params } from './interfaces/common-api';
 import { getLogger, LogHelper } from './utils/logger';
 import { JsonValidators } from './utils/json-validator';
 import { VisitorsDatabase } from './visitors/visitors-db';
+import { DaData, DaDataFioRequest, DaDataFioSuggestion } from './dadata/dadata';
 
 export interface IApiRequest {
   source: 'http' | 'ws' | 'other';
@@ -16,6 +17,7 @@ export interface IApiRequest {
   remoteAddress?: string;
   action: string;
   params: GenericObject;
+  skipDebugLog?: boolean;
 }
 
 export interface IApiResponse {
@@ -32,9 +34,9 @@ export class API extends EventEmitter {
 
   private validators = new JsonValidators('./src/json-schemes/api');
 
-  constructor(vdb: VisitorsDatabase) {
+  constructor(vdb: VisitorsDatabase, daData: DaData) {
     super();
-    this.impl = new ApiImpl(vdb);
+    this.impl = new ApiImpl(vdb, daData);
   }
 
   static makeResponse(src?: GenericObject | Error): IApiResponse {
@@ -73,7 +75,9 @@ export class API extends EventEmitter {
         response = API.makeResponse(
           await handlers[action](request.params, request.currentUser, request.remoteAddress),
         );
-        lh.onSuccess(`[${request.source}|${action}]: OK`);
+        if (!request.skipDebugLog) {
+          lh.onSuccess(`[${request.source}|${action}]: OK`);
+        }
       } catch (err) {
         lh.onError(err);
         response = API.makeResponse(err);
@@ -89,7 +93,7 @@ export class API extends EventEmitter {
 }
 
 class ApiImpl {
-  constructor(private readonly vdb: VisitorsDatabase) {}
+  constructor(private readonly vdb: VisitorsDatabase, private readonly daData: DaData) {}
 
   async doSomething(params: Params<'doSomething'>): ResultsPromise<'doSomething'> {
     return {
@@ -125,6 +129,14 @@ class ApiImpl {
 
     return {
       visitorId: await this.vdb.registerVisitor(visitor, phone, email),
+    };
+  }
+
+  async getDaDataFioSuggestions(
+    params: DaDataFioRequest,
+  ): Promise<{ suggestions: DaDataFioSuggestion[] }> {
+    return {
+      suggestions: await this.daData.getSuggestions(params),
     };
   }
 }

@@ -19,6 +19,7 @@ import { IUser, WSMessagePayload } from './interfaces/common-front';
 import { WebSocket, wsEmitTo } from './express-app/ws';
 import { VisitorsDatabase } from './visitors/visitors-db';
 import { Env } from './utils/env';
+import { DaData } from './dadata/dadata';
 
 const SocketNamespaces = {
   DEFAULT: '/default',
@@ -43,6 +44,7 @@ export class Core extends EventEmitter {
   wsServer: SocketIO.Server | undefined;
   mongoClient: MongoClient | undefined;
   vdb: VisitorsDatabase | undefined;
+  daData: DaData | undefined;
 
   constructor() {
     super();
@@ -115,7 +117,10 @@ export class Core extends EventEmitter {
       this.vdb = new VisitorsDatabase(this.mongoClient);
       await this.vdb.init();
 
-      this.api = new API(this.vdb);
+      this.daData = new DaData(this.mongoClient);
+      await this.daData.init();
+
+      this.api = new API(this.vdb, this.daData);
 
       const apiUrls = ['/api'];
 

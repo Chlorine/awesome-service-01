@@ -55,9 +55,9 @@ export type ServerSettingsItem = {
 export type ServerSettings = { [key in ServerModuleName]: ServerSettingsItem[] };
 
 export type MinimalVisitorInfo = {
+  lastName: string;
   firstName: string;
   middleName: string;
-  lastName: string;
   companyName: string;
   position: string;
 };

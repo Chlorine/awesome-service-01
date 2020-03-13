@@ -18,6 +18,7 @@ export const routeApi = (api: API): Router => {
   const r = Router()
     .use(cors({ origin: true, credentials: true }))
     .use(bodyParser.json({ limit: '17mb' }))
+
     .post('/execute', ensureAuth, (req: Request, res: Response) => {
       const { action } = req.body;
 
@@ -28,6 +29,24 @@ export const routeApi = (api: API): Router => {
           remoteAddress: req.connection.remoteAddress,
           params: req.body,
           source: 'http',
+        })
+        .then((response: IApiResponse) => {
+          res.send(response);
+        })
+        .catch(err => {
+          res.send(API.makeResponse(err));
+        });
+    })
+
+    .post('/suggestions/api/4_1/rs/suggest/fio', (req: Request, res: Response) => {
+      api
+        .execute({
+          action: 'getDaDataFioSuggestions',
+          currentUser: null, // req.user,
+          remoteAddress: req.connection.remoteAddress,
+          params: req.body,
+          source: 'http',
+          skipDebugLog: true,
         })
         .then((response: IApiResponse) => {
           res.send(response);

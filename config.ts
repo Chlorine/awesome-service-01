@@ -13,7 +13,7 @@ const loadConfig = (): IAppConfig => {
     logs: {
       level: Env.getStr('LOG_LEVEL', 'debug'),
       colorize: Env.getBool('LOG_COLORIZE', false),
-      httpLevel: Env.getStr('HTTP_LOG_LEVEL', 'debug'), // TODO: подумать про http лог на сервере
+      httpLevel: Env.getStr('HTTP_LOG_LEVEL', ''), // TODO: подумать про http лог на сервере
     },
 
     workingFolderParams: {
@@ -21,6 +21,8 @@ const loadConfig = (): IAppConfig => {
       subFolderName: 'awesome-01',
       fileNamePrefix: 'awesome-01',
     },
+
+    daDataApiKey: Env.getStr('DADATA_API_KEY', ''),
 
     debug: {
       someValue: false,

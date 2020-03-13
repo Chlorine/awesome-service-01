@@ -16,6 +16,8 @@ export interface IAppConfig {
     httpLevel?: string;
   } & GenericObject;
 
+  daDataApiKey: string;
+
   workingFolderParams: IWorkingFolderParams;
 
   debug?: GenericObject;
