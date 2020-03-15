@@ -2,10 +2,12 @@ import { EventEmitter } from 'events';
 import { MongoClient, Db as MongoDatabase, Collection } from 'mongodb';
 import * as https from 'https';
 
-import { getLogger } from '../utils/logger';
+import { getLogger, LogHelper } from '../utils/logger';
 
 import CONFIG from './../../config';
 import { SuggestionsCacheRecord } from './objects';
+import { Utils } from '../utils/utils';
+import { ElapsedTime } from '../utils/elapsed-time';
 
 export type DaDataNamePart = 'NAME' | 'PATRONYMIC' | 'SURNAME';
 export type DaDataGender = 'MALE' | 'FEMALE' | 'UNKNOWN';
@@ -73,6 +75,9 @@ export class DaData extends EventEmitter {
   }
 
   private async getFromDaData(params: DaDataFioRequest): Promise<DaDataFioSuggestion[]> {
+    const lh = new LogHelper(this, 'getFromDaData');
+    const et = new ElapsedTime();
+
     const options = {
       method: 'POST',
       hostname: 'suggestions.dadata.ru',
@@ -85,49 +90,103 @@ export class DaData extends EventEmitter {
       },
     };
 
-    return new Promise((resolve, reject) => {
-      const req = https.request(options, res => {
-        let result = '';
+    const getRes = await Utils.safeCall(
+      new Promise<DaDataFioSuggestion[]>((resolve, reject) => {
+        const req = https.request(options, res => {
+          let result = '';
 
-        if (res.statusCode !== 200) {
-          return reject(new Error(`Http error: status code ${res.statusCode}`));
-        }
-
-        res.on('data', chunk => {
-          result += chunk;
-        });
-
-        res.on('end', () => {
-          let json: any;
-
-          try {
-            json = JSON.parse(result);
-          } catch (err) {
-            return reject(new Error(`Failed to parse response (${err.message})`));
+          if (res.statusCode !== 200) {
+            return reject(
+              new Error(`Http error: status code ${res.statusCode} (${res.statusMessage})`),
+            );
           }
 
-          if (!json.suggestions || !Array.isArray(json.suggestions)) {
-            return reject(new Error('Cannot find suggestions array in response'));
-          }
+          res.on('data', chunk => {
+            result += chunk;
+          });
 
-          resolve(json.suggestions);
+          res.on('end', () => {
+            let json: any;
+
+            try {
+              json = JSON.parse(result);
+            } catch (err) {
+              return reject(new Error(`Failed to parse response (${err.message})`));
+            }
+
+            if (!json.suggestions || !Array.isArray(json.suggestions)) {
+              return reject(new Error('Cannot find suggestions array in response'));
+            }
+
+            resolve(json.suggestions);
+          });
         });
-      });
 
-      req.on('error', reject);
-      req.write(JSON.stringify(params));
-      req.end();
-    });
+        req.on('error', reject);
+        req.write(JSON.stringify(params));
+        req.end();
+      }),
+    );
+
+    if (getRes.error || !getRes.results) {
+      lh.write(`Http request failed (${getRes.error}) in ${et.getDiffStr()}`, 'error');
+    } else {
+      lh.write(`Received ${getRes.results.length} suggestion(s) in ${et.getDiffStr()}`);
+      et.reset();
+
+      try {
+        const q = params.query.toLowerCase();
+
+        await this.getCollection(params.parts[0], params.gender).updateOne(
+          { q },
+          {
+            $set: {
+              q,
+              hitCount: 1,
+              timestamp: new Date().getTime(),
+              data: getRes.results,
+            },
+          },
+          { upsert: true },
+        );
+        lh.write(`Suggestion(s) saved in ${et.getDiffStr()}`);
+      } catch (err) {
+        lh.write(`Cannot save suggestions (${err})`, 'error');
+      }
+    }
+
+    return getRes.results || [];
+  }
+
+  private getCollection(namePart: DaDataNamePart, gender: DaDataGender) {
+    let collName = `${namePart}-${gender}`;
+    collName = collName.toLowerCase();
+
+    return this.mdb.collection<SuggestionsCacheRecord>(collName);
   }
 
   async getSuggestions(params: DaDataFioRequest): Promise<DaDataFioSuggestion[]> {
-    // console.log(JSON.stringify(params));
+    const et = new ElapsedTime();
 
-    let collName = `${params.parts[0]}-${params.gender}`;
-    collName = collName.toLowerCase();
+    let suggestions: DaDataFioSuggestion[] | undefined;
+    const query = params.query.toLowerCase();
 
-    const coll = this.mdb.collection<SuggestionsCacheRecord>(collName);
+    const findAndUpdRes = await this.getCollection(params.parts[0], params.gender).findOneAndUpdate(
+      {
+        q: query,
+      },
+      { $inc: { hitCount: 1 } },
+    );
 
-    return this.getFromDaData(params);
+    const { value: record } = findAndUpdRes;
+
+    if (record) {
+      this.logger.debug(`Taken from mongo in ${et.getDiffStr()}`);
+      suggestions = record.data;
+    } else {
+      suggestions = await this.getFromDaData(params);
+    }
+
+    return suggestions;
   }
 }
