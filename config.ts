@@ -10,6 +10,7 @@ const loadConfig = (): IAppConfig => {
     common: {
       httpPort: Env.getInt('PORT', 3301),
     },
+
     logs: {
       level: Env.getStr('LOG_LEVEL', 'debug'),
       colorize: Env.getBool('LOG_COLORIZE', false),
@@ -23,6 +24,14 @@ const loadConfig = (): IAppConfig => {
     },
 
     daDataApiKey: Env.getStr('DADATA_API_KEY', ''),
+    daDataRedisDb: Env.getInt('DADATA_REDIS_DB', 6),
+
+    redis: {
+      host: Env.getStr('REDIS_HOST', 'localhost'),
+      port: Env.getInt('REDIS_PORT', 6379),
+      db: Env.getInt('REDIS_DB', 0),
+      lazyConnect: true,
+    },
 
     debug: {
       someValue: false,

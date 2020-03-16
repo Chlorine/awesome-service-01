@@ -1,4 +1,4 @@
-import { DaDataFioSuggestion } from './dadata';
+import { DaDataFioSuggestion } from '../interfaces/common-dadata';
 
 export type SuggestionsCacheRecord = {
   q: string;

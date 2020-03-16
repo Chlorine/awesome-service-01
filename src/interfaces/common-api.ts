@@ -1,4 +1,5 @@
 import { MinimalVisitorInfo } from './common-front';
+import { DaDataFio, DaDataFioRequest, SuggestionsResponse } from './common-dadata';
 
 declare type NoParams = {};
 declare type OnlySuccess = {};
@@ -25,6 +26,10 @@ export type ApiActions = {
     results: {
       visitorId: string;
     };
+  };
+  getDaDataFioSuggestions: {
+    params: DaDataFioRequest;
+    results: SuggestionsResponse<DaDataFio>;
   };
 };
 

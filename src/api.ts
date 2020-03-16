@@ -8,7 +8,7 @@ import { ResultsPromise, Results, Params } from './interfaces/common-api';
 import { getLogger, LogHelper } from './utils/logger';
 import { JsonValidators } from './utils/json-validator';
 import { VisitorsDatabase } from './visitors/visitors-db';
-import { DaData, DaDataFioRequest, DaDataFioSuggestion } from './dadata/dadata';
+import { DaData } from './dadata/dadata';
 
 export interface IApiRequest {
   source: 'http' | 'ws' | 'other';
@@ -133,10 +133,12 @@ class ApiImpl {
   }
 
   async getDaDataFioSuggestions(
-    params: DaDataFioRequest,
-  ): Promise<{ suggestions: DaDataFioSuggestion[] }> {
-    return {
-      suggestions: await this.daData.getSuggestions(params),
-    };
+    params: Params<'getDaDataFioSuggestions'>,
+  ): ResultsPromise<'getDaDataFioSuggestions'> {
+    const resp = await this.daData.getFioSuggestions(params);
+
+    resp.suggestions = resp.suggestions.slice(0, params.count || 10);
+
+    return resp;
   }
 }

@@ -3,7 +3,7 @@ import * as HttpErrors from 'http-errors';
 import * as cors from 'cors';
 import * as bodyParser from 'body-parser';
 
-import { API, IApiResponse } from '../api';
+import { API, IApiResponse } from '../../api';
 
 function ensureAuth(req: Request, res: Response, next: NextFunction) {
   // if (req.isAuthenticated()) return next();

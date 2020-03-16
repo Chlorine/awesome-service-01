@@ -2,14 +2,14 @@ import { EventEmitter } from 'events';
 import * as SocketIO from 'socket.io';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-
 import { MongoClient, MongoClientOptions } from 'mongodb';
+import * as IORedis from 'ioredis';
 
 import { createExpressApp } from './express-app/app';
 import { Database, db } from './db/db';
 
 import { API } from './api';
-import { routeApi } from './express-app/route-api';
+import { routeApi } from './express-app/routes/route-api';
 import { getLogger, LogHelper } from './utils/logger';
 
 import CONFIG from './../config';
@@ -42,7 +42,10 @@ export class Core extends EventEmitter {
   db: Database;
   api: API | undefined;
   wsServer: SocketIO.Server | undefined;
+
   mongoClient: MongoClient | undefined;
+  redisClient: IORedis.Redis | undefined;
+
   vdb: VisitorsDatabase | undefined;
   daData: DaData | undefined;
 
@@ -87,8 +90,12 @@ export class Core extends EventEmitter {
     const lh = new LogHelper(this, 'init');
 
     try {
+      // некоторая sql БД (пока пустышка)
+
       await this.db.init();
       lh.write('db connected');
+
+      // mongo
 
       let mongoClientOpts: MongoClientOptions = {
         useUnifiedTopology: true,
@@ -110,17 +117,30 @@ export class Core extends EventEmitter {
       }
 
       this.mongoClient = new MongoClient(`mongodb://localhost:27017`, mongoClientOpts);
-
       await this.mongoClient.connect();
       lh.write('mongo connected');
+
+      // redis
+
+      this.redisClient = new IORedis(CONFIG.redis);
+      await this.redisClient.connect();
+      lh.write('redis connected');
+
+      // работа с посетителями выставок
 
       this.vdb = new VisitorsDatabase(this.mongoClient);
       await this.vdb.init();
 
+      // коннектор к dadata
+
       this.daData = new DaData(this.mongoClient);
       await this.daData.init();
 
+      // api
+
       this.api = new API(this.vdb, this.daData);
+
+      // express
 
       const apiUrls = ['/api'];
 
