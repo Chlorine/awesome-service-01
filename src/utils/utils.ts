@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as _ from 'lodash';
+import { createHash } from 'crypto';
 
 // tslint:disable:no-var-requires
 const mkdirp = require('mkdirp');
@@ -274,7 +275,7 @@ export class Utils {
     });
   }
 
-  static async safeCall<T>(target: Promise<T>): Promise<{ error: any; results?: T }> {
+  static async safeCall<T>(target: Promise<T>): Promise<{ error: Error | null; results?: T }> {
     try {
       return { error: null, results: await target };
     } catch (err) {
@@ -298,6 +299,12 @@ export class Utils {
     }
 
     return true;
+  }
+
+  static md5(str: string) {
+    return createHash('md5')
+      .update(str)
+      .digest('hex');
   }
 }
 

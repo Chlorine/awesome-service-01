@@ -1,15 +1,19 @@
 import { EventEmitter } from 'events';
-import { MongoClient, Db as MongoDatabase } from 'mongodb';
-import * as _ from 'lodash';
+import { Request as ExpressRequest } from 'express';
+import { UAParser } from 'ua-parser-js';
 
-import { Database } from './db/db';
 import { GenericObject } from './interfaces/common-front';
-import { ResultsPromise, Results, Params } from './interfaces/common-api';
+import { ResultsPromise, Params } from './interfaces/common-api';
 import { getLogger, LogHelper } from './utils/logger';
+import { ILogger } from './interfaces/common';
 import { JsonValidators } from './utils/json-validator';
-import { VisitorsDatabase } from './visitors/visitors-db';
+
 import { DaData } from './dadata/dadata';
 
+import { VisitorsDatabase } from './visitors/visitors-db';
+import { UserAgentInfo } from './visitors/objects';
+
+// TODO: correlationId
 export interface IApiRequest {
   source: 'http' | 'ws' | 'other';
   // requestId?: string;
@@ -18,6 +22,13 @@ export interface IApiRequest {
   action: string;
   params: GenericObject;
   skipDebugLog?: boolean;
+  req?: ExpressRequest;
+}
+
+export interface IRequestContext {
+  currentUser?: any;
+  remoteAddress?: string;
+  req?: ExpressRequest;
 }
 
 export interface IApiResponse {
@@ -36,7 +47,7 @@ export class API extends EventEmitter {
 
   constructor(vdb: VisitorsDatabase, daData: DaData) {
     super();
-    this.impl = new ApiImpl(vdb, daData);
+    this.impl = new ApiImpl(vdb, daData, this.logger.createChild('Impl'));
   }
 
   static makeResponse(src?: GenericObject | Error): IApiResponse {
@@ -70,11 +81,19 @@ export class API extends EventEmitter {
       response = API.makeResponse(error);
     } else {
       try {
-        // this.validators.validate(action, request.params);
-        this.validators.hasValidatorFor(action) && this.validators.validate(action, request.params);
-        response = API.makeResponse(
-          await handlers[action](request.params, request.currentUser, request.remoteAddress),
-        );
+        if (this.validators.hasValidatorFor(action)) {
+          this.validators.validate(action, request.params);
+        } else {
+          lh.write(`No validator found for '${action}'`, 'warn');
+        }
+
+        const ctx: IRequestContext = {
+          currentUser: request.currentUser,
+          remoteAddress: request.remoteAddress,
+          req: request.req,
+        };
+
+        response = API.makeResponse(await handlers[action](request.params, ctx));
         if (!request.skipDebugLog) {
           lh.onSuccess(`[${request.source}|${action}]: OK`);
         }
@@ -93,7 +112,11 @@ export class API extends EventEmitter {
 }
 
 class ApiImpl {
-  constructor(private readonly vdb: VisitorsDatabase, private readonly daData: DaData) {}
+  constructor(
+    private readonly vdb: VisitorsDatabase,
+    private readonly daData: DaData,
+    public readonly logger: ILogger,
+  ) {}
 
   async doSomething(params: Params<'doSomething'>): ResultsPromise<'doSomething'> {
     return {
@@ -119,23 +142,41 @@ class ApiImpl {
     };
   }
 
-  async registerVisitor(params: Params<'registerVisitor'>): ResultsPromise<'registerVisitor'> {
+  async registerVisitor(
+    params: Params<'registerVisitor'>,
+    ctx: IRequestContext,
+  ): ResultsPromise<'registerVisitor'> {
     // TODO: дополнить json scheme по поводу паттернов мыла и телефона
-    // TODO: собрать инфу о http-клиенте
+
+    let uaInfo: UserAgentInfo | null = null;
+
+    if (ctx.req) {
+      try {
+        uaInfo = new UAParser(ctx.req.headers['user-agent']).getResult();
+      } catch (err) {
+        this.logger.warn(`Error while retrieving user agent info (${err.message})`);
+      }
+    }
 
     const { visitor, phone, email } = params;
 
-    console.log(JSON.stringify(params, null, 2));
+    const res = await this.vdb.register({
+      visitor,
+      phone,
+      email,
+      uaInfo,
+      remoteAddress: ctx.remoteAddress,
+    });
 
     return {
-      visitorId: await this.vdb.registerVisitor(visitor, phone, email),
+      visitorId: res.id,
     };
   }
 
   async getDaDataFioSuggestions(
     params: Params<'getDaDataFioSuggestions'>,
   ): ResultsPromise<'getDaDataFioSuggestions'> {
-    const resp = await this.daData.getFioSuggestions(params);
+    const resp = await this.daData.fio.getSuggestions(params);
 
     resp.suggestions = resp.suggestions.slice(0, params.count || 10);
 

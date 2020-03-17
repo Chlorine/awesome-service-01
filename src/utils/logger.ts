@@ -229,7 +229,6 @@ export class LogHelper {
   }
 
   onSuccess(text?: string, ...args: any[]) {
-    // console.log(`onSuccess`, JSON.stringify(args));
     this.logger[this.level](
       `[${this.methodName}]: ${text || 'OK'} (${this.et.getDiffStr()})`,
       ...args,

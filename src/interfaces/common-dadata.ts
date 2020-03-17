@@ -1,8 +1,13 @@
 export type DaDataNamePart = 'NAME' | 'PATRONYMIC' | 'SURNAME';
 export type DaDataGender = 'MALE' | 'FEMALE' | 'UNKNOWN';
 
-export type DaDataFioRequest = {
+export type DaDataRequestBase = {
   query: string;
+};
+
+export type DaDataApi = 'fio' | 'address';
+
+export type DaDataFioRequest = DaDataRequestBase & {
   count?: number;
   parts: DaDataNamePart[];
   gender: DaDataGender;

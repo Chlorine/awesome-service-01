@@ -29,6 +29,7 @@ export const routeApi = (api: API): Router => {
           remoteAddress: req.connection.remoteAddress,
           params: req.body,
           source: 'http',
+          req,
         })
         .then((response: IApiResponse) => {
           res.send(response);
@@ -47,6 +48,7 @@ export const routeApi = (api: API): Router => {
           params: req.body,
           source: 'http',
           skipDebugLog: true,
+          req,
         })
         .then((response: IApiResponse) => {
           res.send(response);

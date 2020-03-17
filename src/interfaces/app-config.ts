@@ -18,8 +18,12 @@ export interface IAppConfig {
     httpLevel?: string;
   } & GenericObject;
 
-  daDataApiKey: string;
-  daDataRedisDb: number;
+  daData: {
+    apiKey: string;
+    redisDb: number;
+    redisKeyTTL: number;
+    mongoRecordTTL: number;
+  };
 
   redis: RedisOptions;
 

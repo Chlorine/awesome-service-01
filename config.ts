@@ -23,8 +23,12 @@ const loadConfig = (): IAppConfig => {
       fileNamePrefix: 'awesome-01',
     },
 
-    daDataApiKey: Env.getStr('DADATA_API_KEY', ''),
-    daDataRedisDb: Env.getInt('DADATA_REDIS_DB', 6),
+    daData: {
+      apiKey: Env.getStr('DADATA_API_KEY', ''),
+      redisDb: Env.getInt('DADATA_REDIS_DB', 6),
+      redisKeyTTL: Env.getInt('DADATA_REDIS_KEY_TTL', 24 * 60 * 60),
+      mongoRecordTTL: Env.getInt('DADATA_MONGO_RECORD_TTL', 0), // TODO: сколько хранить запись?
+    },
 
     redis: {
       host: Env.getStr('REDIS_HOST', 'localhost'),
