@@ -20,6 +20,7 @@ import { WebSocket, wsEmitTo } from './express-app/ws';
 import { VisitorsDatabase } from './visitors/visitors-db';
 import { Env } from './utils/env';
 import { DaData } from './dadata/dadata';
+import { Utils } from './utils/utils';
 
 const SocketNamespaces = {
   DEFAULT: '/default',
@@ -97,33 +98,16 @@ export class Core extends EventEmitter {
 
       // mongo
 
-      let mongoClientOpts: MongoClientOptions = {
-        useUnifiedTopology: true,
-        appname: 'awesome-service-01',
-      };
-
-      if (Env.getBool('USE_HARDCODED_MONGO_AUTH', false)) {
-        mongoClientOpts = {
-          ...mongoClientOpts,
-          ...{
-            authSource: 'admin',
-            authMechanism: 'SCRAM-SHA-1',
-            auth: {
-              user: 'admin',
-              password: 'ticket1soft',
-            },
-          },
-        };
-      }
-
-      this.mongoClient = new MongoClient(`mongodb://localhost:27017`, mongoClientOpts);
-      await this.mongoClient.connect();
+      // TODO: take mongo settings from config
+      this.mongoClient = new MongoClient(`mongodb://localhost:27017`, this.mongoClientOptions);
+      await Utils.wrappedCall(this.mongoClient.connect(), 'Connect to mongo');
       lh.write('mongo connected');
 
       // redis
 
       this.redisClient = new IORedis(CONFIG.redis);
-      await this.redisClient.connect();
+      this.redisClient.on('error', err => this.logger.error(`Redis error: ${err.message}`));
+      await Utils.wrappedCall(this.redisClient.connect(), 'Connect to redis');
       lh.write('redis connected');
 
       // работа с посетителями выставок
@@ -196,5 +180,28 @@ export class Core extends EventEmitter {
         socket.currentMode = payload.mode;
       });
     }
+  }
+
+  private get mongoClientOptions(): MongoClientOptions {
+    let opts: MongoClientOptions = {
+      useUnifiedTopology: true,
+      appname: 'awesome-service-01',
+    };
+
+    if (Env.getBool('USE_HARDCODED_MONGO_AUTH', false)) {
+      opts = {
+        ...opts,
+        ...{
+          authSource: 'admin',
+          authMechanism: 'SCRAM-SHA-1',
+          auth: {
+            user: 'admin',
+            password: 'ticket1soft',
+          },
+        },
+      };
+    }
+
+    return opts;
   }
 }
