@@ -2,25 +2,30 @@ import { EventEmitter } from 'events';
 import * as SocketIO from 'socket.io';
 import * as _ from 'lodash';
 import * as moment from 'moment';
-import { MongoClient, MongoClientOptions } from 'mongodb';
+import { MongoClientOptions } from 'mongodb';
 import * as IORedis from 'ioredis';
+import * as mongoose from 'mongoose';
 
 import { createExpressApp } from './express-app/app';
 import { Database, db } from './db/db';
 
-import { API } from './api';
+import { API } from './api/index';
 import { routeApi } from './express-app/routes/route-api';
 import { getLogger, LogHelper } from './utils/logger';
 
 import CONFIG from './../config';
 
 import { GenericObject } from './interfaces/common-front';
-import { IUser, WSMessagePayload } from './interfaces/common-front';
+import { WSMessagePayload } from './interfaces/common-front/ws';
 import { WebSocket, wsEmitTo } from './express-app/ws';
-import { VisitorsDatabase } from './visitors/visitors-db';
 import { Env } from './utils/env';
-import { DaData } from './dadata/dadata';
+import { DaData } from './services/dadata';
 import { Utils } from './utils/utils';
+import { endResponseWithJson } from './express-app/routes/_route-utils';
+
+import { PublicEventsService } from './services/public-events';
+import { UsersService } from './services/users';
+import { Mailer } from './services/mailer';
 
 const SocketNamespaces = {
   DEFAULT: '/default',
@@ -43,46 +48,21 @@ export class Core extends EventEmitter {
   db: Database;
   api: API | undefined;
   wsServer: SocketIO.Server | undefined;
-
-  mongoClient: MongoClient | undefined;
   redisClient: IORedis.Redis | undefined;
 
-  vdb: VisitorsDatabase | undefined;
-  daData: DaData | undefined;
+  private _daData: DaData | undefined;
+  private _publicEvents: PublicEventsService | undefined;
+  private _mailer: Mailer | undefined;
+  private _users: UsersService | undefined;
+
+  static get urlBaseForLinks(): string {
+    return 'https://cloudtickets.io';
+  }
 
   constructor() {
     super();
 
     this.db = db;
-  }
-
-  private async tempDoAuth(
-    username: string | null,
-    password: string | null,
-    userId: string | null,
-  ): Promise<IUser> {
-    this.logger.debug(`tempDoAuth ${username} | ${password} | ${userId}`);
-    let res: IUser | null = null;
-
-    const fakeUser: IUser & { password: string } = {
-      id: '4321',
-      role: 'admin',
-      username: 'admin',
-      password: '1234',
-    };
-
-    if (
-      (username === fakeUser.username && password === fakeUser.password) ||
-      userId === fakeUser.id
-    ) {
-      res = fakeUser;
-    }
-
-    if (!res) {
-      throw new Error('User not found');
-    }
-
-    return res;
   }
 
   async init() {
@@ -98,9 +78,18 @@ export class Core extends EventEmitter {
 
       // mongo
 
-      // TODO: take mongo settings from config
-      this.mongoClient = new MongoClient(`mongodb://localhost:27017`, this.mongoClientOptions);
-      await Utils.wrappedCall(this.mongoClient.connect(), 'Connect to mongo');
+      const mongoUri = `mongodb://${CONFIG.mongo.host}:${CONFIG.mongo.port}`;
+
+      mongoose.set('useCreateIndex', true);
+      mongoose.set('useFindAndModify', false);
+
+      await Utils.wrappedCall(
+        mongoose.connect(mongoUri, {
+          ...Core.mongoClientOptions,
+          dbName: CONFIG.mongo.db,
+        }),
+        'Connect to mongo',
+      );
       lh.write('mongo connected');
 
       // redis
@@ -110,30 +99,38 @@ export class Core extends EventEmitter {
       await Utils.wrappedCall(this.redisClient.connect(), 'Connect to redis');
       lh.write('redis connected');
 
-      // работа с посетителями выставок
-
-      this.vdb = new VisitorsDatabase(this.mongoClient);
-      await this.vdb.init();
-
       // коннектор к dadata
 
-      this.daData = new DaData(this.mongoClient);
-      await this.daData.init();
+      this._daData = new DaData(mongoose.connection.db);
+      await this._daData.init();
+
+      // СЕРВИСЫ:
+
+      this._mailer = new Mailer();
+      await this._mailer.init();
+
+      // юзеры системы
+      this._users = new UsersService();
+      await this._users.init();
+
+      // проведение публичных событий
+      this._publicEvents = new PublicEventsService(mongoose.connection.db);
+      await this._publicEvents.init();
 
       // api
 
-      this.api = new API(this.vdb, this.daData);
+      this.api = new API(this);
 
       // express
 
-      const apiUrls = ['/api'];
+      const apiUrls = ['/api/execute'];
 
       const expressApp = createExpressApp({
         httpPort: CONFIG.common.httpPort,
         logger: this.logger,
         httpLogger: CONFIG.logs.httpLevel ? getLogger('HTTP', 'http') : undefined,
         passportAuthSource: {
-          doAuth: this.tempDoAuth.bind(this),
+          doAuth: this._users.doAuth.bind(this._users),
         },
         cookieSecret: 'Awesome01@$^!',
 
@@ -147,7 +144,7 @@ export class Core extends EventEmitter {
           let answered = false;
 
           if (reqMethod.toUpperCase() === 'POST' && apiUrls.includes(reqUrl)) {
-            res.send(API.makeResponse(new Error(err.message)));
+            endResponseWithJson(res, API.makeResults(new Error(err.message)), 500);
             answered = true;
           }
 
@@ -182,10 +179,11 @@ export class Core extends EventEmitter {
     }
   }
 
-  private get mongoClientOptions(): MongoClientOptions {
+  private static get mongoClientOptions(): MongoClientOptions {
     let opts: MongoClientOptions = {
       useUnifiedTopology: true,
-      appname: 'awesome-service-01',
+      useNewUrlParser: true,
+      appname: 'awesome-service',
     };
 
     if (Env.getBool('USE_HARDCODED_MONGO_AUTH', false)) {
@@ -203,5 +201,37 @@ export class Core extends EventEmitter {
     }
 
     return opts;
+  }
+
+  get daData(): DaData {
+    if (!this._daData) {
+      throw new Error('daData: module is not ready');
+    }
+
+    return this._daData;
+  }
+
+  get users(): UsersService {
+    if (!this._users) {
+      throw new Error('users: module is not ready');
+    }
+
+    return this._users;
+  }
+
+  get mailer(): Mailer {
+    if (!this._mailer) {
+      throw new Error('mailer: module is not ready');
+    }
+
+    return this._mailer;
+  }
+
+  get publicEvents(): PublicEventsService {
+    if (!this._publicEvents) {
+      throw new Error('publicEvents: module is not ready');
+    }
+
+    return this._publicEvents;
   }
 }

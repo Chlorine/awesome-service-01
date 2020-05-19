@@ -1,0 +1,14 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Получение данных пользователя",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [],
+  "properties": {
+    "id": {
+      "description": "Id пользователя (опционально)",
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{24}$"
+    }
+  }
+}

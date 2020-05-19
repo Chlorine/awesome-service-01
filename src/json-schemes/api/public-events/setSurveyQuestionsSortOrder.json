@@ -1,0 +1,25 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Установить порядок сортировки вопросов в анкете",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "surveyId",
+    "questionIDs"
+  ],
+  "properties": {
+    "surveyId": {
+      "description": "ID объекта",
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{24}$"
+    },
+    "questionIDs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9a-fA-F]{24}$"
+      },
+      "minLength": 1
+    }
+  }
+}

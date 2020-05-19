@@ -3,7 +3,6 @@ import { EventEmitter } from 'events';
 
 import { getLogger } from './logger';
 import { ILogger } from '../interfaces/common';
-import { GenericInfoEvent } from '../interfaces/common-front';
 
 export type ScheduledJobType = 'interval' | 'cron';
 

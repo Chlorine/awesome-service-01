@@ -6,7 +6,6 @@ import { createHash } from 'crypto';
 // tslint:disable:no-var-requires
 const mkdirp = require('mkdirp');
 
-import { GenericDbObject, GenericObject } from '../interfaces/common-front';
 import CONFIG from './../../config';
 
 /**
@@ -72,14 +71,6 @@ export class Utils {
   // static pickProps<E, EN extends keyof E>(src: any, propNamesToPick: EN[]): E {
   //   return _.pick(src, propNamesToPick) as E;
   // }
-
-  /**
-   * Для логирования
-   * @param list
-   */
-  static stringifyObjectList(list: GenericDbObject[]) {
-    return list.map(item => `#${item.id} ${item.name}`).join(', ');
-  }
 
   /**
    * is nVal an integer value
@@ -305,6 +296,18 @@ export class Utils {
     return createHash('md5')
       .update(str)
       .digest('hex');
+  }
+
+  /**
+   * Установка значения свойства модели (например при обработке опциональных параметров методов API)
+   * @param entity
+   * @param {PN} propName
+   * @param {E[P] | undefined} value значение, которого может и не быть
+   */
+  static setEntityProperty<E, PN extends keyof E>(entity: E, propName: PN, value?: E[PN]) {
+    if (value !== undefined) {
+      entity[propName] = value;
+    }
   }
 }
 

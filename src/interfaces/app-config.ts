@@ -1,4 +1,5 @@
 import { RedisOptions } from 'ioredis';
+import { Options as SMTPTransportOptions } from 'nodemailer/lib/smtp-transport';
 
 import { GenericObject } from './common-front';
 import { IWorkingFolderParams } from './common';
@@ -26,6 +27,19 @@ export interface IAppConfig {
   };
 
   redis: RedisOptions;
+
+  mongo: {
+    host: string;
+    port: number;
+    db: string;
+  };
+
+  mail: {
+    defaultFrom: string;
+    defaultFromName: string;
+    sendQueuePollInterval: number;
+    smtp?: SMTPTransportOptions;
+  };
 
   workingFolderParams: IWorkingFolderParams;
 

@@ -37,6 +37,27 @@ const loadConfig = (): IAppConfig => {
       lazyConnect: true,
     },
 
+    mongo: {
+      host: Env.getStr('MONGO_HOST', 'localhost'),
+      port: Env.getInt('MONGO_PORT', 27017),
+      db: Env.getStr('MONGO_DB', 'awesome-service'),
+    },
+
+    mail: {
+      defaultFrom: 'no-reply@cloudtickets.io',
+      defaultFromName: 'Awesome Service',
+      sendQueuePollInterval: 3000,
+      smtp: {
+        host: Env.getStr('SMTP_HOST', 'invalid_smtp_host'),
+        port: Env.getInt('SMTP_PORT', 465),
+        secure: Env.getBool('SMTP_SECURE', true),
+        auth: {
+          user: Env.getStr('SMTP_USER', ''),
+          pass: Env.getStr('SMTP_PASSWORD', ''),
+        },
+      },
+    },
+
     debug: {
       someValue: false,
     },

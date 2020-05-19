@@ -1,0 +1,14 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Подтверждение email пользователя",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["token"],
+  "properties": {
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  }
+}

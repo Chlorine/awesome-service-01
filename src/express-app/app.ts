@@ -2,6 +2,7 @@ import * as SocketIO from 'socket.io';
 import * as HttpErrors from 'http-errors';
 import * as express from 'express';
 import { Request, Response, NextFunction } from 'express';
+import { MongoClient } from 'mongodb';
 
 import { createMainRouter } from './router';
 import { STATUS_CODES as HTTP_STATUS_CODES } from 'http';

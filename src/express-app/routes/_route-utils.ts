@@ -1,5 +1,3 @@
-import { OutgoingHttpHeaders } from 'http';
-
 import * as _ from 'lodash';
 import * as moment from 'moment';
 
@@ -36,6 +34,10 @@ export const endResponseWithImage = (res: Response, photo?: Image) => {
   res.writeHead(200, { 'Content-Type': photo.contentType });
   res.write(photo.buffer);
   res.end();
+};
+
+export const endResponseWithJson = (res: Response, json: GenericObject, status: number = 200) => {
+  res.status(status).send(json);
 };
 
 const DATE_PARAM_FORMAT = 'DD.MM.YYYY HH:mm';

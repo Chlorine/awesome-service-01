@@ -8,7 +8,7 @@ const ajvLocalize = require('ajv-i18n');
 import { Utils } from './utils';
 import { Dictionary } from '../interfaces/common-front';
 
-const _ajv = AJV({ useDefaults: true });
+const _ajv = AJV({ useDefaults: true, format: 'full' });
 
 export class JsonValidator {
   private readonly vfn!: AJV.ValidateFunction;
@@ -30,6 +30,16 @@ export class JsonValidator {
       ajvLocalize.ru(this.vfn.errors);
       throw new Error(`Ошибка валидации (${_ajv.errorsText(this.vfn.errors)})`);
     }
+  }
+
+  tryValidate(json: any): string | null {
+    if (!this.vfn(json)) {
+      ajvLocalize.ru(this.vfn.errors);
+
+      return _ajv.errorsText(this.vfn.errors);
+    }
+
+    return null;
   }
 }
 
@@ -62,5 +72,11 @@ export class JsonValidators {
 
   validate(validatorName: string, json: any) {
     this.validators[validatorName] && this.validators[validatorName].validate(json);
+  }
+
+  tryValidate(validatorName: string, json: any): string | null {
+    if (!this.validators[validatorName]) return null;
+
+    return this.validators[validatorName].tryValidate(json);
   }
 }

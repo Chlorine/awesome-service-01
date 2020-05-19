@@ -1,0 +1,20 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Основные параметры запроса",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["target", "action"],
+  "properties": {
+    "target": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "default": "core"
+    },
+    "action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    }
+  }
+}

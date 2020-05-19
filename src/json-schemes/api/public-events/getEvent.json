@@ -1,0 +1,14 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Получение публичного мероприятия по ID",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [],
+  "properties": {
+    "id": {
+      "description": "ID объекта",
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{24}$"
+    }
+  }
+}

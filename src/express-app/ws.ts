@@ -3,7 +3,7 @@ import { Server as HttpServer } from 'http';
 import * as cookieParser from 'cookie-parser';
 import * as SocketIO from 'socket.io';
 import { getLogger } from '../utils/logger';
-import { WebSocketMode, WSMessages } from '../interfaces/common-front';
+import { WebSocketMode, WSMessages } from '../interfaces/common-front/ws';
 const passportSocketIO = require('passport.socketio');
 
 export type WebSocket = SocketIO.Socket & {

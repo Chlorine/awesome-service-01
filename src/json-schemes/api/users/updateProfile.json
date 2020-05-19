@@ -1,0 +1,32 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Изменение данных пользователя",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["firstName", "middleName", "lastName"],
+  "properties": {
+    "id": {
+      "description": "Id пользователя (опционально)",
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{24}$"
+    },
+    "firstName": {
+      "type": "string",
+      "description": "Имя",
+      "minLength": 0,
+      "maxLength": 64
+    },
+    "middleName": {
+      "type": "string",
+      "description": "Отчество",
+      "minLength": 0,
+      "maxLength": 64
+    },
+    "lastName": {
+      "type": "string",
+      "description": "Фамилия",
+      "minLength": 0,
+      "maxLength": 64
+    }
+  }
+}

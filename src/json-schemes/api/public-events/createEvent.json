@@ -1,0 +1,94 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Создание нового публичного мероприятия",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "name",
+    "description",
+    "place",
+    "start",
+    "end"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Название мероприятия",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "description": "Описание",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "place": {
+      "type": "object",
+      "description": "Место проведения",
+      "additionalProperties": true,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Название места проведения",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "address": {
+          "type": "string",
+          "description": "Название места проведения",
+          "minLength": 0,
+          "maxLength": 1024,
+          "default": ""
+        },
+        "location": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": [
+            "type",
+            "coordinates"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "Point"
+              ],
+              "default": "Point"
+            },
+            "coordinates": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 3
+            }
+          }
+        }
+      }
+    },
+    "start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Дата и время начала в формате ISO 8601 (UTC)"
+    },
+    "end": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Дата и время окончания в формате ISO 8601 (UTC)"
+    },
+    "surveyId": {
+      "description": "ID опросника (опционально)",
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 24,
+      "maxLength": 24
+    }
+  }
+}

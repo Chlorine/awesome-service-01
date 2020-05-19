@@ -1,3 +1,5 @@
+import 'ua-parser-js';
+
 export interface IWorkingFolderParams {
   companyName: string;
   subFolderName: string;
