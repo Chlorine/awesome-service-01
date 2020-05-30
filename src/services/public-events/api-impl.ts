@@ -624,9 +624,6 @@ export class PublicEventsApiImpl extends ApiImpl {
                   count: { $sum: 1 },
                 },
               },
-              {
-                $unset: ['_id'],
-              },
             ],
           },
         },
