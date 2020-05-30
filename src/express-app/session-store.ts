@@ -15,10 +15,10 @@ export function createSessionStore() {
     collection: 'http-sessions',
   });
 
-  store.on('create', (sid: string) => logger.silly(`Session CREATED ${sid}`));
-  store.on('touch', (sid: string) => logger.silly(`Session TOUCHED ${sid}`));
-  store.on('update', (sid: string) => logger.silly(`Session UPDATED ${sid}`));
-  store.on('destroy', (sid: string) => logger.silly(`Session DESTROYED ${sid}`));
+  // store.on('create', (sid: string) => logger.silly(`Session CREATED ${sid}`));
+  // store.on('touch', (sid: string) => logger.silly(`Session TOUCHED ${sid}`));
+  // store.on('update', (sid: string) => logger.silly(`Session UPDATED ${sid}`));
+  // store.on('destroy', (sid: string) => logger.silly(`Session DESTROYED ${sid}`));
 
   return store;
 }

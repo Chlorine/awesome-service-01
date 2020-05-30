@@ -56,7 +56,7 @@ export class Core extends EventEmitter {
   private _users: UsersService | undefined;
 
   static get urlBaseForLinks(): string {
-    return 'https://cloudtickets.io';
+    return CONFIG.common.urlBaseForLinks;
   }
 
   constructor() {

@@ -1,46 +1,50 @@
-import { ICreateUserParams, IUpdateUserParams, IUserInfo } from './index';
+import { CheckAuthResponse, CreateUserParams, UpdateUserParams, UserInfo } from './index';
 
 export type ApiActions = {
   /**
-   * Создание нового пользователя
+   * Создание нового пользователя + автологин
+   * Auth: not required
+   *
    */
   createUser: {
-    params: ICreateUserParams;
-    results: {
-      userId: string;
-    };
+    params: CreateUserParams;
+    results: CheckAuthResponse;
   };
   /**
-   * Подтверждение email с помощью токена (обработка перехода по ссылке из письма)
+   * Подтверждение email с помощью токена (обработка перехода по ссылке из письма) + автологин
+   * Auth: not required
    */
   confirmEmail: {
     params: {
       token: string;
     };
-    results: {};
+    results: CheckAuthResponse;
   };
   /**
    * Получить данные пользователя
+   * Auth: user
    */
   getProfile: {
     params: {
       id?: string;
     };
     results: {
-      userInfo: IUserInfo;
+      userInfo: UserInfo;
     };
   };
   /**
    * Обновить данные пользователя
+   * Auth: user
    */
   updateProfile: {
-    params: { id?: string } & IUpdateUserParams;
+    params: { id?: string } & UpdateUserParams;
     results: {
-      userInfo: IUserInfo;
+      userInfo: UserInfo;
     };
   };
   /**
    * Сменить пароль текущего пользователя
+   * Auth: user
    */
   changePassword: {
     params: {
@@ -51,6 +55,7 @@ export type ApiActions = {
   };
   /**
    * Отправить письмо со ссылкой на смену пароля
+   * Auth: not required
    */
   requestPasswordReset: {
     params: {
@@ -59,17 +64,19 @@ export type ApiActions = {
     results: {};
   };
   /**
-   * Установить новый пароль
+   * Установить новый пароль + автологин
+   * Auth: not required
    */
   resetPassword: {
     params: {
       token: string;
       password: string;
     };
-    results: {};
+    results: CheckAuthResponse;
   };
   /**
    * (Пере)послать письмо со ссылкой для подтверждения email
+   * Auth: user
    */
   requestEmailConfirm: {
     params: {};

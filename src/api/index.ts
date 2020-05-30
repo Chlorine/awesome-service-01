@@ -4,7 +4,6 @@ import * as _ from 'lodash';
 
 import { GenericObject } from '../interfaces/common-front';
 import { ApiResults } from '../interfaces/common-front/index';
-import { IUserInfo } from '../interfaces/common-front/users';
 import { Core } from '../core';
 import { getLogger, LogHelper } from '../utils/logger';
 import { ApiImpl } from './impl';

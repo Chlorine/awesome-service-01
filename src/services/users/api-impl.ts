@@ -14,6 +14,9 @@ import { LogHelper } from '../../utils/logger';
 import { ElapsedTime } from '../../utils/elapsed-time';
 import { Core } from '../../core';
 
+import CONFIG from './../../../config';
+import { Utils } from '../../utils/utils';
+
 export class UsersApiImpl extends ApiImpl {
   constructor() {
     super('/api/users', 'API.Users');
@@ -49,21 +52,36 @@ export class UsersApiImpl extends ApiImpl {
       u.lastName = lastName;
 
       await u.save();
+
       lh.write(`user '${email}' created (${et.getDiffStr()})`, 'info');
       et.reset();
 
       const t = new VerificationToken({ user: u, type: 'email' });
       await t.save();
 
-      lh.write(`email confirmation token created (${et.getDiffStr()})`);
+      lh.write(`email confirmation token created (${t.id}, ${et.getDiffStr()})`);
 
-      ctx.core.mailer!.sendTemplateMail({ to: email }, 'userRegistered', {
-        user: u.asUserInfo(),
-        emailConfirmLink: Core.urlBaseForLinks + `/service-link/confirm-email?token=${t.value}`,
-      });
+      const skipMailSending = CONFIG.debug && CONFIG.debug.skipSendingUserRegisteredMail;
+
+      if (!skipMailSending) {
+        await ctx.core.mailer.sendTemplateMail({ to: email }, 'userRegistered', {
+          user: u.asUserInfo(),
+          emailConfirmLink: Core.urlBaseForLinks + `/service-link/confirm-email?token=${t.value}`,
+        });
+      }
+
+      if (ctx.req) {
+        await new Promise((resolve, reject) => {
+          ctx.req!.login(u, err => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      }
 
       return {
-        userId: u._id.toHexString(),
+        user: u.asUserInfo(),
+        uiSettings: {},
       };
     },
     /**
@@ -80,23 +98,37 @@ export class UsersApiImpl extends ApiImpl {
 
       const userToken = await VerificationToken.findWithUser(tokenValue, 'email');
       if (!userToken) {
-        throw new HttpErrors.NotFound(`Токен не найден`);
+        throw new HttpErrors.NotFound(`Токен не найден (ссылка некорректна или устарела)`);
       }
 
-      if (!userToken.user) {
+      const { user } = userToken;
+
+      if (!user) {
         // скорее 500, чем не 500
         lh.write(`Cannot find user for verification token '${tokenValue}'`, 'error');
         throw new Error(`Внутренняя ошибка`);
       }
 
-      userToken.user.active = true;
-      await userToken.user.save();
+      user.emailConfirmed = true;
+      await user.save();
 
-      lh.write(`user '${userToken.user.email}' is now ACTIVE`);
+      lh.write(`User email '${user.email}' is now CONFIRMED`);
+
+      if (ctx.req) {
+        await new Promise((resolve, reject) => {
+          ctx.req!.login(user, err => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      }
 
       await userToken.remove();
 
-      return {};
+      return {
+        user: user.asUserInfo(),
+        uiSettings: {},
+      };
     },
     /**
      * Получить данные пользователя
@@ -108,21 +140,6 @@ export class UsersApiImpl extends ApiImpl {
       ctx: IApiContext,
     ): ResultsPromise<'getProfile'> => {
       const user = await getUser(ctx, params.id);
-
-      ///////////////////////////
-
-      // const userToken = await VerificationToken.findWithUser('123123');
-      //
-      // if (userToken) console.log(JSON.stringify(userToken.user));
-
-      // const token = new VerificationToken();
-      // token.user = user;
-      // token.type = 'email';
-      // token.value = '123123';
-      //
-      // await token.save();
-
-      ///////////////////////////
 
       return {
         userInfo: user.asUserInfo(),
@@ -138,11 +155,12 @@ export class UsersApiImpl extends ApiImpl {
       ctx: IApiContext,
     ): ResultsPromise<'updateProfile'> => {
       const { id, firstName, middleName, lastName } = params;
+
       const u = await getUser(ctx, id);
 
-      u.firstName = firstName;
-      u.middleName = middleName;
-      u.lastName = lastName;
+      Utils.setEntityProperty(u, 'firstName', firstName);
+      Utils.setEntityProperty(u, 'middleName', middleName);
+      Utils.setEntityProperty(u, 'lastName', lastName);
 
       await u.save();
 
@@ -224,7 +242,7 @@ export class UsersApiImpl extends ApiImpl {
 
       const userToken = await VerificationToken.findWithUser(token, 'psw-reset');
       if (!userToken) {
-        throw new HttpErrors.NotFound(`Токен не найден`);
+        throw new HttpErrors.NotFound(`Токен не найден (ссылка некорректна или устарела)`);
       }
 
       if (!userToken.user) {
@@ -236,15 +254,26 @@ export class UsersApiImpl extends ApiImpl {
       const user = userToken.user;
 
       user.password = password;
-      user.active = true;
 
       await user.save();
 
       lh.write(`Password for user '${userToken.user.email}' was CHANGED`);
 
+      if (ctx.req) {
+        await new Promise((resolve, reject) => {
+          ctx.req!.login(user, err => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      }
+
       await userToken.remove();
 
-      return {};
+      return {
+        user: user.asUserInfo(),
+        uiSettings: {},
+      };
     },
     requestEmailConfirm: async (
       params: Params<'requestEmailConfirm'>,
@@ -254,7 +283,7 @@ export class UsersApiImpl extends ApiImpl {
       const et = new ElapsedTime();
 
       const u = checkAuth(ctx);
-      if (u.active) throw new HttpErrors.BadRequest('Email already confirmed');
+      if (u.emailConfirmed) throw new HttpErrors.BadRequest('Email already confirmed');
 
       await VerificationToken.deleteMany({ user: u, type: 'email' });
       const t = new VerificationToken({ user: u, type: 'email' });
@@ -262,7 +291,7 @@ export class UsersApiImpl extends ApiImpl {
 
       lh.write(`token created (${et.getDiffStr()})`);
 
-      ctx.core.mailer!.sendTemplateMail({ to: u.email }, 'userRegistered', {
+      await ctx.core.mailer.sendTemplateMail({ to: u.email }, 'userRegistered', {
         user: u.asUserInfo(),
         emailConfirmLink: Core.urlBaseForLinks + `/service-link/confirm-email?token=${t.value}`,
       });

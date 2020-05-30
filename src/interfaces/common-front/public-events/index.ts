@@ -1,5 +1,4 @@
 import { GeoPoint } from '../index';
-import { EventVisitorBase } from './visitor';
 import { PublicEventInfo } from './event';
 import { SurveyInfo } from './survey';
 
@@ -21,16 +20,6 @@ export type EventPlaceInfo = {
   location?: GeoPoint;
 };
 
-export type BasicVisitorInfo = {
-  lastName: string;
-  firstName: string;
-  middleName: string;
-  companyName: string;
-  position: string;
-  phone: string;
-  email: string;
-};
-
 /**
  * Ответ на вопрос анкеты
  */
@@ -47,4 +36,13 @@ export type PublicEventFullInfo = Pick<
   Exclude<keyof PublicEventInfo, 'userId' | 'surveyId'>
 > & {
   survey?: SurveyInfo;
+};
+
+/**
+ * Иллюстративная сводка по публичным мероприятиям пользователя (для Dashboard)
+ */
+export type SummaryEventsInfo = {
+  eventCount: number;
+  actualEventCount: number;
+  totalVisitors: number;
 };

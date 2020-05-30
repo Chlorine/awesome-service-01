@@ -86,6 +86,12 @@ export const routeApi = (api: API): Router => {
 
         req.logIn(user, err => {
           if (err) return next(err);
+
+          // как бы про "remember me" чекбокс
+          // console.log(req.session);
+          // @ts-ignore
+          // req.session.cookie.maxAge = null;
+
           const response: LoginResponse = {
             user: user.asUserInfo(),
             uiSettings: prepareUISettings(),
@@ -96,7 +102,7 @@ export const routeApi = (api: API): Router => {
       })(req, res, next);
     })
 
-    .post('/check_auth', (req, res) => {
+    .post('/check-auth', (req, res) => {
       if (!req.isAuthenticated()) {
         return endResponseWithJson(
           res,

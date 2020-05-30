@@ -34,6 +34,9 @@ export class UsersService {
     } else {
       u = await User.findByCredentials(email!, password!);
       if (u) {
+        if (!u.active) {
+          throw new Error(`Учетная запись деактивирована`);
+        }
         this.logger.silly(`[doAuth]: email '${email}': user found! (${u._id}, ${et.getDiffStr()})`);
       } else {
         this.logger.error(`[doAuth]: email '${email}': user NOT found! (${et.getDiffStr()})`);

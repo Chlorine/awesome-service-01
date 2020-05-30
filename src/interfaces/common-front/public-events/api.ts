@@ -8,7 +8,7 @@ import {
 } from './survey-question';
 
 import { RegisterEventVisitorParams, EventVisitorInfo } from './visitor';
-import { PublicEventFullInfo } from './index';
+import { PublicEventFullInfo, SummaryEventsInfo } from './index';
 
 export type ApiActions = {
   /**
@@ -166,6 +166,33 @@ export type ApiActions = {
     results: {
       visitor: EventVisitorInfo;
     };
+  };
+  /**
+   * Получение иллюстративной сводки по публичным мероприятиям пользователя
+   * Скорее для Dashboard чем не для Dashboard
+   * Auth: user
+   */
+  getSummary: {
+    params: {};
+    results: {
+      summary: SummaryEventsInfo;
+    };
+  };
+  /**
+   * Получение ссылки для fast-track регистрации
+   * Auth: user
+   */
+  getEventFastTrackLink: {
+    params: { id: string };
+    results: { link: string };
+  };
+  /**
+   * Получение html-фрагмента с кодом виджета для конкр. мероприятия
+   * Auth: user
+   */
+  getEventWidgetFragment: {
+    params: { id: string };
+    results: { fragment: string };
   };
 };
 

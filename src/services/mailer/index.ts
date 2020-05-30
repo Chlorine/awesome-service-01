@@ -1,9 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import * as NM from 'nodemailer';
-import * as NJ from 'nunjucks';
-import { ObjectID } from 'mongodb';
 import * as htmlToText from 'html-to-text';
+import { join } from 'path';
 
 import { getLogger, LogHelper } from '../../utils/logger';
 import { Utils } from '../../utils/utils';
@@ -17,6 +14,8 @@ import CONFIG from '../../../config';
 import { createIntervalScheduledJob, IScheduledJob } from '../../utils/scheduled-job';
 import { ILogger } from '../../interfaces/common';
 
+import { nj, readOptionalTemplateFile, readTemplateFile } from '../../utils/template-helpers';
+
 declare type NodemailerSendResult = {
   messageId?: string;
 };
@@ -25,7 +24,6 @@ export class Mailer {
   config = CONFIG.mail;
   logger = getLogger('Mail');
   private readonly transport = NM.createTransport(this.config.smtp!);
-  nj = new NJ.Environment(null, { autoescape: true });
   sendingJob: IScheduledJob | undefined;
 
   htmlToTextOpts: htmlToText.HtmlToTextOptions = {
@@ -132,24 +130,15 @@ export class Mailer {
         throw new Error(`Unexpected template type '${type}'`);
     }
 
-    const { error, results } = await Utils.safeCall(
-      new Promise<string>((resolve, reject) => {
-        fs.readFile(path.join(__dirname, file), (err, data) => {
-          if (err) return reject(err);
-          resolve(data.toString());
-        });
-      }),
-    );
+    let res: string;
 
-    if (error) {
-      if ('text' === type) {
-        return '';
-      }
-
-      throw error;
+    if (type === 'text') {
+      res = (await readOptionalTemplateFile(join(__dirname, file))) || '';
+    } else {
+      res = await readTemplateFile(join(__dirname, file));
     }
 
-    return results!;
+    return res;
   }
 
   private async getPreparedTemplate(
@@ -164,7 +153,7 @@ export class Mailer {
     // TODO: compile templates!
 
     try {
-      res = this.nj.renderString(await this.getTemplate(name, type), data);
+      res = nj.renderString(await this.getTemplate(name, type), data);
     } catch (err) {
       lh.onError(err);
       throw new Error('Failed to render template');

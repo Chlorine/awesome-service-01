@@ -1,8 +1,10 @@
 import * as HttpErrors from 'http-errors';
 import * as moment from 'moment';
+import * as mongoose from 'mongoose';
+import { join } from 'path';
 
 import { ApiImpl } from '../../api/impl';
-import { Params, ResultsPromise } from '../../interfaces/common-front/public-events/api';
+import { Params, Results, ResultsPromise } from '../../interfaces/common-front/public-events/api';
 
 import { IApiContext } from '../../api/index';
 import { tryGetUAInfo } from '../../utils/user-agent-info';
@@ -20,6 +22,9 @@ import { getUser } from '../users/utils';
 import { Utils } from '../../utils/utils';
 
 import { SurveyQuestionInfo } from '../../interfaces/common-front/public-events/survey-question';
+
+import CONFIG from '../../../config';
+import { nj, readTemplateFile } from '../../utils/template-helpers';
 
 export class PublicEventsApiImpl extends ApiImpl {
   constructor() {
@@ -122,6 +127,9 @@ export class PublicEventsApiImpl extends ApiImpl {
         if (start.isSameOrAfter(end)) {
           throw new HttpErrors.BadRequest(`Время начала должно быть раньше времени окончания`);
         }
+
+        event.start = start.toDate();
+        event.end = end.toDate();
       }
 
       if (surveyId !== undefined) {
@@ -567,6 +575,144 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       return {
         visitor: visitor.asVisitorInfo(),
+      };
+    },
+    /**
+     * Получение иллюстративной сводки по публичным мероприятиям пользователя
+     * @param params
+     * @param ctx
+     */
+    getSummary: async (
+      params: Params<'getSummary'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getSummary'> => {
+      const summary: Results<'getSummary'>['summary'] = {
+        eventCount: 0,
+        actualEventCount: 0,
+        totalVisitors: 0,
+      };
+
+      const u = checkAuth(ctx);
+
+      // https://docs.mongodb.com/manual/reference/operator/aggregation/lookup/
+
+      let aggRes = await PublicEvent.aggregate<{
+        name: string;
+        visitors: Array<{ count: number }>;
+      }>([
+        {
+          $match: {
+            user: mongoose.Types.ObjectId(u.id),
+          },
+        },
+        {
+          $lookup: {
+            from: EventVisitor.collection.collectionName,
+            as: 'visitors',
+            let: { eventId: '$_id' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $eq: ['$event', '$$eventId'],
+                  },
+                },
+              },
+              {
+                $group: {
+                  _id: null,
+                  count: { $sum: 1 },
+                },
+              },
+              {
+                $unset: ['_id'],
+              },
+            ],
+          },
+        },
+        {
+          $replaceRoot: {
+            newRoot: {
+              _id: '$_id',
+              name: '$name',
+              visitors: '$visitors',
+            },
+          },
+        },
+      ]);
+
+      aggRes.forEach(entry => {
+        const { visitors } = entry;
+
+        summary.eventCount++;
+        summary.actualEventCount++; // TODO: по времени?
+
+        if (visitors && visitors.length > 0) {
+          summary.totalVisitors += visitors[0].count;
+        }
+      });
+
+      // console.log(JSON.stringify(res, null, 2));
+
+      return { summary };
+    },
+    /**
+     * Получение ссылки для fast-track регистрации
+     * @param params
+     * @param ctx
+     */
+    getEventFastTrackLink: async (
+      params: Params<'getEventFastTrackLink'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getEventFastTrackLink'> => {
+      const { id } = params;
+
+      const event = await PublicEvent.findById(id);
+      if (!event) {
+        throw new HttpErrors.NotFound(`Мероприятие не найдено`);
+      }
+
+      checkObjectOwnership(ctx, event);
+
+      return {
+        link: CONFIG.common.fastTrackUrlBase + `/start/${event.id}`,
+      };
+    },
+    /**
+     * Получение html-фрагмента с кодом виджета для конкр. мероприятия
+     * @param params
+     * @param ctx
+     */
+    getEventWidgetFragment: async (
+      params: Params<'getEventWidgetFragment'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getEventWidgetFragment'> => {
+      const { id } = params;
+
+      const event = await PublicEvent.findById(id);
+      if (!event) {
+        throw new HttpErrors.NotFound(`Мероприятие не найдено`);
+      }
+
+      checkObjectOwnership(ctx, event);
+
+      let fragment: string;
+
+      try {
+        fragment = nj.renderString(
+          await readTemplateFile(join(__dirname, './widget/widget-fragment.html')),
+          {
+            eventId: event.id,
+            loaderUrlBase: CONFIG.common.widgetLoadersUrlBase,
+          },
+        );
+      } catch (err) {
+        this.logger.error('getEventWidgetFragment', err);
+        throw new Error('Внутренняя ошибка');
+      }
+
+      return {
+        fragment,
       };
     },
   };

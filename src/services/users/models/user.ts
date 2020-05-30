@@ -2,7 +2,7 @@ import { Document, Schema, model, Model } from 'mongoose';
 import * as BCryptJS from 'bcryptjs';
 
 import { Utils } from '../../../utils/utils';
-import { IUserInfo, UserRole } from '../../../interfaces/common-front/users/index';
+import { UserInfo, UserRole } from '../../../interfaces/common-front/users/index';
 
 const HASH_SALT_ROUND = 10;
 
@@ -19,6 +19,8 @@ interface IUserSchema extends Document {
 
   createdAt: Date;
   updatedAt: Date;
+
+  emailConfirmed: boolean;
 }
 
 const UserSchema: Schema = new Schema(
@@ -31,7 +33,7 @@ const UserSchema: Schema = new Schema(
     },
     active: {
       type: Boolean,
-      default: false,
+      default: true,
     },
 
     email: {
@@ -57,6 +59,11 @@ const UserSchema: Schema = new Schema(
       type: String,
       default: '',
     },
+
+    emailConfirmed: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );
@@ -64,7 +71,7 @@ const UserSchema: Schema = new Schema(
 export interface IUser extends IUserSchema {
   fullName: string;
   fullNameShort: string;
-  asUserInfo(): IUserInfo;
+  asUserInfo(): UserInfo;
   isValidPassword(password: string): Promise<boolean>;
 }
 
@@ -85,7 +92,7 @@ UserSchema.virtual('fullNameShort').get(function() {
   return Utils.formatShortName(firstName, middleName, lastName);
 });
 
-UserSchema.methods.asUserInfo = function(): IUserInfo {
+UserSchema.methods.asUserInfo = function(): UserInfo {
   return {
     id: this._id.toHexString(),
     role: this.role,
@@ -96,6 +103,8 @@ UserSchema.methods.asUserInfo = function(): IUserInfo {
     firstName: this.firstName,
     middleName: this.middleName,
     lastName: this.lastName,
+
+    emailConfirmed: this.emailConfirmed,
   };
 };
 

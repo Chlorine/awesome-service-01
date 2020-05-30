@@ -101,7 +101,7 @@ PublicEventSchema.methods.asPublicEventFullInfo = function(): PublicEventFullInf
 };
 
 PublicEventSchema.statics.findUserEvents = async function(userId: string): Promise<IPublicEvent[]> {
-  return this.find({ user: userId });
+  return this.find({ user: userId }, null, { sort: { start: 'asc' } });
 };
 
 PublicEventSchema.statics.findWithSurvey = async function(

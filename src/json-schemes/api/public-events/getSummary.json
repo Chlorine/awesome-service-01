@@ -1,0 +1,8 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Получение иллюстративной сводки по публичным мероприятиям пользователя",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [],
+  "properties": {}
+}

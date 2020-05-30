@@ -43,7 +43,11 @@ const VisitorSchema = new Schema(
       index: true,
     },
 
-    hash: { type: String, required: true, unique: true },
+    hash: {
+      type: String,
+      required: true,
+      unique: false, // не надо unique (один и тот же человек может сунуться на разные мероприятия)
+    },
 
     lastName: { type: String, required: true },
     firstName: { type: String, required: true },

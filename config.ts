@@ -9,6 +9,12 @@ const loadConfig = (): IAppConfig => {
 
     common: {
       httpPort: Env.getInt('PORT', 3301),
+      urlBaseForLinks: Env.getStr('URL_BASE_FOR_LINKS', 'https://cloudtickets.io'),
+      fastTrackUrlBase: Env.getStr('FAST_TRACK_URL_BASE', 'https://fast-track.cloudtickets.io'),
+      widgetLoadersUrlBase: Env.getStr(
+        'WIDGET_LOADERS_URL_BASE',
+        'https://api.cloudtickets.io/widgets',
+      ),
     },
 
     logs: {
@@ -60,6 +66,7 @@ const loadConfig = (): IAppConfig => {
 
     debug: {
       someValue: false,
+      skipSendingUserRegisteredMail: Env.getBool('SKIP_SEND_USER_REG_MAIL', false),
     },
   };
 };

@@ -1,17 +1,17 @@
 import { SendMailOptions as SMO } from 'nodemailer';
 
-import { IUserInfo } from '../../../interfaces/common-front/users/index';
+import { UserInfo } from '../../../interfaces/common-front/users/index';
 import { GenericObject } from '../../../interfaces/common-front/index';
 
 // https://github.com/leemunroe/responsive-html-email-template
 
 export type MailTemplates = {
   userRegistered: {
-    user: IUserInfo;
+    user: UserInfo;
     emailConfirmLink: string;
   };
   userPasswordReset: {
-    user: IUserInfo;
+    user: UserInfo;
     passwordResetLink: string;
   };
 };

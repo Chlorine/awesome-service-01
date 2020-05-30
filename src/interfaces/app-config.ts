@@ -11,6 +11,9 @@ export interface IAppConfig {
 
   common: {
     httpPort: number;
+    urlBaseForLinks: string;
+    fastTrackUrlBase: string;
+    widgetLoadersUrlBase: string;
   };
 
   logs: {
