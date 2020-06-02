@@ -1,4 +1,5 @@
 import { Document, Schema, model, Model } from 'mongoose';
+import * as moment from 'moment';
 import * as BCryptJS from 'bcryptjs';
 
 import { Utils } from '../../../utils/utils';
@@ -21,6 +22,7 @@ interface IUserSchema extends Document {
   updatedAt: Date;
 
   emailConfirmed: boolean;
+  birthday?: Date | null;
 }
 
 const UserSchema: Schema = new Schema(
@@ -64,6 +66,10 @@ const UserSchema: Schema = new Schema(
       type: Boolean,
       default: false,
     },
+    birthday: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true },
 );
@@ -105,6 +111,7 @@ UserSchema.methods.asUserInfo = function(): UserInfo {
     lastName: this.lastName,
 
     emailConfirmed: this.emailConfirmed,
+    birthday: this.birthday ? moment(this.birthday).format('YYYY-MM-DD') : null,
   };
 };
 

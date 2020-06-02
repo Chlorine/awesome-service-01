@@ -12,6 +12,7 @@ export type UserInfo = {
   lastName: string;
 
   emailConfirmed: boolean;
+  birthday: string | null;
 };
 
 export type WebUISettings = {
@@ -34,4 +35,5 @@ export type UpdateUserParams = {
   firstName?: string;
   middleName?: string;
   lastName?: string;
+  birthday?: string | null;
 };

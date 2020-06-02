@@ -1,4 +1,6 @@
 import { Document, Schema, model, Model } from 'mongoose';
+import * as moment from 'moment';
+
 import { SurveyInfo } from '../../../interfaces/common-front/public-events/survey';
 import { IUser } from '../../users/models/user';
 import SurveyQuestion, { ISurveyQuestion } from './survey-question';
@@ -47,6 +49,7 @@ SurveySchema.methods.asSurveyInfo = function(): SurveyInfo {
     userId: this.populated('user') ? this.user.id : this.user,
     name: this.name,
     description: this.description,
+    updatedAt: moment.utc(this.updatedAt).toISOString(),
   };
 
   if (this.populated('questions')) {
@@ -57,7 +60,7 @@ SurveySchema.methods.asSurveyInfo = function(): SurveyInfo {
 };
 
 SurveySchema.statics.findUserSurveys = async function(userId: string): Promise<ISurvey[]> {
-  return this.find({ user: userId });
+  return this.find({ user: userId }).sort({ updatedAt: -1 });
 };
 
 export interface ISurveyWithQuestions extends ISurvey {

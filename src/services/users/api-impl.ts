@@ -1,4 +1,5 @@
 import * as HttpErrors from 'http-errors';
+import * as moment from 'moment';
 
 import { ApiImpl } from '../../api/impl';
 import { Params, ResultsPromise } from '../../interfaces/common-front/users/api';
@@ -154,13 +155,21 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'updateProfile'>,
       ctx: IApiContext,
     ): ResultsPromise<'updateProfile'> => {
-      const { id, firstName, middleName, lastName } = params;
+      const { id, firstName, middleName, lastName, birthday } = params;
 
       const u = await getUser(ctx, id);
 
       Utils.setEntityProperty(u, 'firstName', firstName);
       Utils.setEntityProperty(u, 'middleName', middleName);
       Utils.setEntityProperty(u, 'lastName', lastName);
+
+      if (birthday !== undefined) {
+        if (birthday) {
+          u.birthday = moment(birthday, 'YYYY-MM-DD').toDate();
+        } else {
+          u.birthday = null;
+        }
+      }
 
       await u.save();
 
@@ -181,7 +190,7 @@ export class UsersApiImpl extends ApiImpl {
       const { oldPassword, newPassword } = params;
 
       const oldPasswordValid = await u.isValidPassword(oldPassword);
-      if (!oldPasswordValid) throw new HttpErrors.Forbidden('Указан неверный старый пароль');
+      if (!oldPasswordValid) throw new HttpErrors.Forbidden('Указан неверный текущий пароль');
 
       u.password = newPassword;
 

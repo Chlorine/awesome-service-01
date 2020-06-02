@@ -30,6 +30,11 @@ export type SurveyInfo = {
    * Вопросы анкеты
    */
   questions?: SurveyQuestionInfo[];
+
+  /**
+   * Время последнего изменения в формате ISO 8601 (UTC)
+   */
+  updatedAt: string;
 };
 
 /**

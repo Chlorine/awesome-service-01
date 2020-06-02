@@ -88,7 +88,7 @@ VisitorSchema.methods.asVisitorInfo = function(): EventVisitorInfo {
     email: this.email,
 
     gender: this.gender,
-    birthday: this.birthday ? moment(this.birthday).format('YYYY-MM-DD') : null,
+    birthday: this.birthday ? moment.utc(this.birthday).format('YYYY-MM-DD') : null,
   };
 };
 

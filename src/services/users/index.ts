@@ -25,7 +25,7 @@ export class UsersService {
     if (userId) {
       u = await User.findById(userId);
       if (u) {
-        this.logger.silly(`[doAuth]: id ${userId}: user found! (${et.getDiffStr()})`);
+        // this.logger.silly(`[doAuth]: id ${userId}: user found! (${et.getDiffStr()})`);
       } else {
         this.logger.error(`[doAuth]: id ${userId}: user  NOT found! (${et.getDiffStr()})`);
 
