@@ -125,6 +125,18 @@ export type ApiActions = {
     };
   };
   /**
+   * Получить вопрос анкеты по ID
+   * Auth: user
+   */
+  getSurveyQuestion: {
+    params: {
+      id: string;
+    };
+    results: {
+      question: SurveyQuestionInfo;
+    };
+  };
+  /**
    * Изменить вопрос анкеты
    * Auth: user
    */

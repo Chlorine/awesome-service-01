@@ -249,7 +249,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       const u = checkAuth(ctx);
       const { id } = params;
 
-      const survey = await Survey.findById(id);
+      const survey = await Survey.findWithQuestions(id);
       if (!survey) {
         throw new HttpErrors.NotFound(`Анкета не найдена`);
       }
@@ -324,7 +324,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       }
       checkObjectOwnership(ctx, survey);
 
-      const { text, description, answerType, answerVariants, displayOrder } = params;
+      const { text, description, answerType, answerVariants } = params;
 
       if (answerType !== 'YesNo') {
         if (!answerVariants || answerVariants.length < 2) {
@@ -334,18 +334,41 @@ export class PublicEventsApiImpl extends ApiImpl {
         }
       }
 
+      await SurveyQuestion.getDisplayOrderForNewQuestion(surveyId);
+
       const sq = new SurveyQuestion({
         survey: survey.id,
         text,
         description,
         answerType,
         answerVariants,
-        displayOrder,
+        displayOrder: await SurveyQuestion.getDisplayOrderForNewQuestion(surveyId),
       });
 
       await sq.save();
 
       lh.onSuccess(`questionId: ${sq.id}`);
+
+      return {
+        question: sq.asSurveyQuestionInfo(),
+      };
+    },
+    /**
+     * Получить вопрос анкеты по ID
+     * @param params
+     * @param ctx
+     */
+    getSurveyQuestion: async (
+      params: Params<'getSurveyQuestion'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getSurveyQuestion'> => {
+      const { id } = params;
+      const sq = await SurveyQuestion.findWithSurvey(id);
+      if (!sq) {
+        throw new HttpErrors.NotFound('Вопрос анкеты не найден');
+      }
+
+      checkObjectOwnership(ctx, sq.survey);
 
       return {
         question: sq.asSurveyQuestionInfo(),
@@ -392,7 +415,7 @@ export class PublicEventsApiImpl extends ApiImpl {
         sq.answerVariants = answerVariants;
       }
 
-      Utils.setEntityProperty(sq, 'displayOrder', params.displayOrder);
+      // Utils.setEntityProperty(sq, 'displayOrder', params.displayOrder);
 
       await sq.save();
 
@@ -424,11 +447,15 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       for (let q of survey.questions) {
         q.displayOrder = questionIDs.indexOf(q.id);
-        if (-1 === q.displayOrder) {
-          throw new HttpErrors.BadRequest(
-            `Invalid questionIDs array (existing question id is missing)`,
-          );
-        }
+
+        // лучше уж не проверять, а то бахнется на параллельном редактировании
+        // оно в принципе всегда остается в более-менее годном состоянии
+
+        // if (-1 === q.displayOrder) {
+        //   throw new HttpErrors.BadRequest(
+        //     `Invalid questionIDs array (existing question id is missing)`,
+        //   );
+        // }
       }
 
       for (let q of survey.questions) {

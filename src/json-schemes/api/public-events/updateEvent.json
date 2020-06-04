@@ -21,8 +21,9 @@
     "description": {
       "type": "string",
       "description": "Описание",
-      "minLength": 1,
-      "maxLength": 512
+      "minLength": 0,
+      "maxLength": 512,
+      "default": ""
     },
     "place": {
       "type": "object",

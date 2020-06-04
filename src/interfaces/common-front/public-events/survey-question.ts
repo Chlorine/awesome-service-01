@@ -55,7 +55,7 @@ export type CreateSurveyQuestionParams = {
   answerType: SurveyQuestionInfo['answerType'];
   answerVariants?: string[];
 
-  displayOrder?: SurveyQuestionInfo['displayOrder'];
+  // displayOrder?: SurveyQuestionInfo['displayOrder'];
 };
 
 /**
@@ -73,5 +73,5 @@ export type UpdateSurveyQuestionParams = {
   answerType?: SurveyQuestionInfo['answerType'];
   answerVariants?: string[];
 
-  displayOrder?: SurveyQuestionInfo['displayOrder'];
+  // displayOrder?: SurveyQuestionInfo['displayOrder'];
 };

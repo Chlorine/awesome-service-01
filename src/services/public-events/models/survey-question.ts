@@ -1,6 +1,7 @@
 import { Document, Schema, model, Model } from 'mongoose';
 import { ISurvey } from './survey';
 import { SurveyQuestionInfo } from '../../../interfaces/common-front/public-events/survey-question';
+import * as mongoose from 'mongoose';
 
 export interface ISurveyQuestion extends Document {
   survey: ISurvey['_id'];
@@ -89,9 +90,30 @@ SurveyQuestionSchema.statics.findWithSurvey = async function(
     .exec();
 };
 
+SurveyQuestionSchema.statics.getDisplayOrderForNewQuestion = async function(
+  surveyId: string,
+): Promise<number> {
+  const aggRes: Array<{ maxDisplayOrder: number }> = await this.aggregate([
+    {
+      $match: {
+        survey: mongoose.Types.ObjectId(surveyId),
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        maxDisplayOrder: { $max: '$displayOrder' },
+      },
+    },
+  ]);
+
+  return aggRes.length > 0 ? aggRes[0].maxDisplayOrder + 1 : 0;
+};
+
 export interface ISurveyQuestionModel extends Model<ISurveyQuestion> {
   findSurveyQuestions(surveyId: string): Promise<ISurveyQuestion[]>;
   findWithSurvey(id: string): Promise<ISurveyQuestion_Populated | null>;
+  getDisplayOrderForNewQuestion(surveyId: string): Promise<number>;
 }
 
 export default model<ISurveyQuestion, ISurveyQuestionModel>(
