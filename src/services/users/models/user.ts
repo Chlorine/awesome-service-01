@@ -22,7 +22,9 @@ interface IUserSchema extends Document {
   updatedAt: Date;
 
   emailConfirmed: boolean;
+
   birthday?: Date | null;
+  gender?: 'male' | 'female' | null;
 }
 
 const UserSchema: Schema = new Schema(
@@ -70,6 +72,10 @@ const UserSchema: Schema = new Schema(
       type: Date,
       default: null,
     },
+    gender: {
+      type: String,
+      enum: ['male', 'female'],
+    },
   },
   { timestamps: true },
 );
@@ -112,6 +118,7 @@ UserSchema.methods.asUserInfo = function(): UserInfo {
 
     emailConfirmed: this.emailConfirmed,
     birthday: this.birthday ? moment(this.birthday).format('YYYY-MM-DD') : null,
+    gender: this.gender || null,
   };
 };
 

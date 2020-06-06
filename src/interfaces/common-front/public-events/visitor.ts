@@ -15,7 +15,7 @@ export type EventVisitorBase = {
   email: string;
 
   // extra
-  gender?: 'male' | 'female';
+  gender?: 'male' | 'female' | null;
   birthday?: string | null;
 };
 

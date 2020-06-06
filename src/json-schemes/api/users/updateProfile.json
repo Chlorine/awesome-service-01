@@ -3,7 +3,7 @@
   "title": "Изменение данных пользователя",
   "type": "object",
   "additionalProperties": true,
-  "required": ["firstName", "middleName", "lastName"],
+  "required": [],
   "properties": {
     "id": {
       "description": "Id пользователя (опционально)",
@@ -27,6 +27,19 @@
       "description": "Фамилия",
       "minLength": 1,
       "maxLength": 64
+    },
+    "birthday": {
+      "type": "string",
+      "description": "День рождения YYYY-MM-DD",
+      "format": "date"
+    },
+    "gender": {
+      "type": ["string", "null"],
+      "description": "Пол",
+      "enum": [
+        "male",
+        "female"
+      ]
     }
   }
 }

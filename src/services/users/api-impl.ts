@@ -155,7 +155,7 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'updateProfile'>,
       ctx: IApiContext,
     ): ResultsPromise<'updateProfile'> => {
-      const { id, firstName, middleName, lastName, birthday } = params;
+      const { id, firstName, middleName, lastName, birthday, gender } = params;
 
       const u = await getUser(ctx, id);
 
@@ -170,6 +170,8 @@ export class UsersApiImpl extends ApiImpl {
           u.birthday = null;
         }
       }
+
+      Utils.setEntityProperty(u, 'gender', gender);
 
       await u.save();
 

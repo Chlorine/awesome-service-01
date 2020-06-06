@@ -40,7 +40,8 @@
         "minLength": 1,
         "maxLength": 255
       },
-      "minItems": 2
+      "minItems": 2,
+      "maxItems": 32
     },
     "displayOrder": {
       "type": "integer",
