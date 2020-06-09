@@ -134,6 +134,7 @@ export class Core extends EventEmitter {
         },
         cookieSecret: 'Awesome01@$^!',
         cookieName: 'awesome-service-sid',
+        cookieSecure: CONFIG.common.secureCookies,
 
         routes: [{ path: '/api', routeMatcher: routeApi(this.api) }],
 

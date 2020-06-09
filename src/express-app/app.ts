@@ -18,6 +18,7 @@ export type ExpressAppParams = {
   passportAuthSource: IPassportAuthSource;
   cookieSecret: string;
   cookieName?: string;
+  cookieSecure?: boolean;
   routes: { path: string; routeMatcher: express.Router }[];
   ws: {
     namespaces: string[];
@@ -40,6 +41,7 @@ export function createExpressApp(params: ExpressAppParams): ExpressApp {
     ws,
     logger,
     cookieName,
+    cookieSecure,
   } = params;
   const app = express();
 
@@ -58,6 +60,7 @@ export function createExpressApp(params: ExpressAppParams): ExpressApp {
         passportAuthSource,
         sessionStore,
         cookieName,
+        cookieSecure,
       }),
     )
     // 404

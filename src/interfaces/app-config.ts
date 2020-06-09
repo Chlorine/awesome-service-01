@@ -15,6 +15,7 @@ export interface IAppConfig {
     fastTrackUrlBase: string;
     widgetLoadersUrlBase: string;
     visitorRegWidgetUrlBase: string;
+    secureCookies: boolean;
   };
 
   logs: {

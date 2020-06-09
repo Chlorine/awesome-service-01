@@ -16,11 +16,19 @@ export type MainRouterParams = {
   cookieSecret: string;
   routes: { path: string; routeMatcher: Router }[];
   cookieName?: string;
+  cookieSecure?: boolean;
 };
 
 export function createMainRouter(params: MainRouterParams): Router {
   const router = express.Router();
-  const { passportAuthSource, routes, cookieSecret, sessionStore, cookieName } = params;
+  const {
+    passportAuthSource,
+    routes,
+    cookieSecret,
+    sessionStore,
+    cookieName,
+    cookieSecure,
+  } = params;
 
   const staticOptions: ServeStaticOptions = {
     dotfiles: 'ignore',
@@ -42,7 +50,7 @@ export function createMainRouter(params: MainRouterParams): Router {
         saveUninitialized: false,
         cookie: {
           maxAge: 48 * 60 * 60 * 1000,
-          secure: 'auto',
+          secure: cookieSecure,
         },
         store: sessionStore,
       }),
