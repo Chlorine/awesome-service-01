@@ -19,7 +19,7 @@ const loadConfig = (): IAppConfig => {
         'VISITOR_REG_WIDGET_URL_BASE',
         'https://visitor-reg-widget.cloudtickets.io',
       ),
-      secureCookies: Env.getBool('SECURE_COOKIES', true),
+      secureCookies: Env.getBool('SECURE_COOKIES', true), // TODO: понять как это делается правильно с учетом nginx
     },
 
     logs: {
