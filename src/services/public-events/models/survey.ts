@@ -4,6 +4,7 @@ import * as moment from 'moment';
 import { SurveyInfo } from '../../../interfaces/common-front/public-events/survey';
 import { IUser } from '../../users/models/user';
 import SurveyQuestion, { ISurveyQuestion } from './survey-question';
+import * as mongoose from 'mongoose';
 
 export interface ISurvey extends Document {
   user: IUser['_id'];
@@ -33,6 +34,8 @@ const SurveySchema = new Schema(
     description: {
       type: String,
     },
+
+    qChanges: { type: Number, default: 0 }, // но не в ISurvey
   },
   { timestamps: true },
 );
@@ -89,9 +92,14 @@ SurveySchema.statics.findWithQuestions = async function(
   return survey;
 };
 
+SurveySchema.statics.onQuestionsChange = async function(surveyId: string): Promise<void> {
+  await this.findOneAndUpdate({ _id: surveyId }, { $inc: { qChanges: 1 } });
+};
+
 export interface ISurveyModel extends Model<ISurvey> {
   findUserSurveys(userId: string): Promise<ISurvey[]>;
   findWithQuestions(id: string): Promise<ISurveyWithQuestions | null>;
+  onQuestionsChange(surveyId: string): Promise<void>;
 }
 
 export default model<ISurvey, ISurveyModel>('Survey', SurveySchema, 'surveys');

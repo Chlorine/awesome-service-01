@@ -204,7 +204,10 @@ export type ApiActions = {
    */
   getEventWidgetFragment: {
     params: { id: string };
-    results: { fragment: string };
+    results: {
+      fragment: string;
+      widgetUrlBase: string;
+    };
   };
 };
 

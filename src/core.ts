@@ -133,6 +133,7 @@ export class Core extends EventEmitter {
           doAuth: this._users.doAuth.bind(this._users),
         },
         cookieSecret: 'Awesome01@$^!',
+        cookieName: 'awesome-service-sid',
 
         routes: [{ path: '/api', routeMatcher: routeApi(this.api) }],
 

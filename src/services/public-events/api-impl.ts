@@ -346,6 +346,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       });
 
       await sq.save();
+      await Survey.onQuestionsChange(survey.id);
 
       lh.onSuccess(`questionId: ${sq.id}`);
 
@@ -415,9 +416,8 @@ export class PublicEventsApiImpl extends ApiImpl {
         sq.answerVariants = answerVariants;
       }
 
-      // Utils.setEntityProperty(sq, 'displayOrder', params.displayOrder);
-
       await sq.save();
+      await Survey.onQuestionsChange(sq.survey.id);
 
       lh.onSuccess();
 
@@ -462,6 +462,8 @@ export class PublicEventsApiImpl extends ApiImpl {
         await q.save();
       }
 
+      await Survey.onQuestionsChange(survey.id);
+
       lh.onSuccess();
 
       return {};
@@ -486,6 +488,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       checkObjectOwnership(ctx, sq.survey);
 
       await sq.remove();
+      await Survey.onQuestionsChange(sq.survey.id);
 
       lh.onSuccess(`question ${id} was removed`);
 
@@ -512,7 +515,6 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       const {
         firstName,
-        middleName,
         lastName,
         companyName,
         position,
@@ -521,6 +523,8 @@ export class PublicEventsApiImpl extends ApiImpl {
         birthday,
         gender,
       } = params.visitor;
+
+      const middleName = params.visitor.middleName || '';
 
       let hashSrc = `${firstName}|${middleName}|${lastName}|${companyName}|${position}|${phone}|${email}`;
 
@@ -737,6 +741,7 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       return {
         fragment,
+        widgetUrlBase: CONFIG.common.visitorRegWidgetUrlBase,
       };
     },
   };

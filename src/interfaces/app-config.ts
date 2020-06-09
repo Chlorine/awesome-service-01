@@ -14,6 +14,7 @@ export interface IAppConfig {
     urlBaseForLinks: string;
     fastTrackUrlBase: string;
     widgetLoadersUrlBase: string;
+    visitorRegWidgetUrlBase: string;
   };
 
   logs: {

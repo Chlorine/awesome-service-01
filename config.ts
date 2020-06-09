@@ -15,6 +15,10 @@ const loadConfig = (): IAppConfig => {
         'WIDGET_LOADERS_URL_BASE',
         'https://api.cloudtickets.io/widgets',
       ),
+      visitorRegWidgetUrlBase: Env.getStr(
+        'VISITOR_REG_WIDGET_URL_BASE',
+        'https://visitor-reg-widget.cloudtickets.io',
+      ),
     },
 
     logs: {

@@ -2,7 +2,6 @@ import * as SocketIO from 'socket.io';
 import * as HttpErrors from 'http-errors';
 import * as express from 'express';
 import { Request, Response, NextFunction } from 'express';
-import { MongoClient } from 'mongodb';
 
 import { createMainRouter } from './router';
 import { STATUS_CODES as HTTP_STATUS_CODES } from 'http';
@@ -18,6 +17,7 @@ export type ExpressAppParams = {
   httpLogger?: ILogger;
   passportAuthSource: IPassportAuthSource;
   cookieSecret: string;
+  cookieName?: string;
   routes: { path: string; routeMatcher: express.Router }[];
   ws: {
     namespaces: string[];
@@ -31,7 +31,16 @@ export type ExpressApp = {
 };
 
 export function createExpressApp(params: ExpressAppParams): ExpressApp {
-  const { cookieSecret, httpPort, routes, httpLogger, passportAuthSource, ws, logger } = params;
+  const {
+    cookieSecret,
+    httpPort,
+    routes,
+    httpLogger,
+    passportAuthSource,
+    ws,
+    logger,
+    cookieName,
+  } = params;
   const app = express();
 
   const sessionStore = createSessionStore();
@@ -48,6 +57,7 @@ export function createExpressApp(params: ExpressAppParams): ExpressApp {
         routes,
         passportAuthSource,
         sessionStore,
+        cookieName,
       }),
     )
     // 404

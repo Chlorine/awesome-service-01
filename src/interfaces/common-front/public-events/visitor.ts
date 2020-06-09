@@ -6,7 +6,7 @@ import { SurveyAnswerInfo } from './index';
 export type EventVisitorBase = {
   lastName: string;
   firstName: string;
-  middleName: string;
+  middleName?: string;
 
   companyName: string;
   position: string;
