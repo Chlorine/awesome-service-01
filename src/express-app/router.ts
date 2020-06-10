@@ -50,7 +50,7 @@ export function createMainRouter(params: MainRouterParams): Router {
         saveUninitialized: false,
         cookie: {
           maxAge: 48 * 60 * 60 * 1000,
-          // secure: cookieSecure,
+          secure: cookieSecure,
           // sameSite: 'none',
         },
         store: sessionStore,
