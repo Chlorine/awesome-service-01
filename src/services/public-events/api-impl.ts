@@ -724,23 +724,29 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       checkObjectOwnership(ctx, event);
 
-      let fragment: string;
+      let fragments: string[] = [];
 
       try {
-        fragment = nj.renderString(
-          await readTemplateFile(join(__dirname, './widget/widget-fragment.html')),
-          {
-            eventId: event.id,
-            loaderUrlBase: CONFIG.common.widgetLoadersUrlBase,
-          },
-        );
+        // на фронте 0) button 1) triggers 2) embed
+
+        for (let variant of ['button', 'triggers', 'embed']) {
+          fragments.push(
+            nj.renderString(
+              await readTemplateFile(join(__dirname, `./widget/widget-fragment-${variant}.html`)),
+              {
+                eventId: event.id,
+                loaderUrlBase: CONFIG.common.widgetLoadersUrlBase,
+              },
+            ),
+          );
+        }
       } catch (err) {
         this.logger.error('getEventWidgetFragment', err);
         throw new Error('Внутренняя ошибка');
       }
 
       return {
-        fragment,
+        fragments,
         widgetUrlBase: CONFIG.common.visitorRegWidgetUrlBase,
       };
     },

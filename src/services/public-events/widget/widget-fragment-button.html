@@ -1,0 +1,22 @@
+<!-- ВИДЖЕТ РЕГИСТРАЦИИ ПОСЕТИТЕЛЯ СОБЫТИЯ: НАЧАЛО ФРАГМЕНТА -->
+<script>
+  window.VISITOR_REGISTRATION_WIDGET = {
+    // идентификатор события
+    eventId: "{{eventId}}",
+    // опционально: parent-элемент для кнопки
+    container: '#widget-container',
+    // параметры кнопки
+    button: {
+      // текст кнопки
+      text: "Регистрация посетителя",
+      // опционально: цвет текста
+      color: "#ffffff",
+      // опционально: цвет фона
+      backgroundColor: "#57ae70",
+      // опционально: стиль кнопки (из стилей сайта)
+      className: "visitor-reg-button"
+    },
+  };
+</script>
+<script src="{{loaderUrlBase}}/visitor-reg.min.js" type="text/javascript" async></script>
+<!-- ВИДЖЕТ РЕГИСТРАЦИИ ПОСЕТИТЕЛЯ СОБЫТИЯ: КОНЕЦ ФРАГМЕНТА -->

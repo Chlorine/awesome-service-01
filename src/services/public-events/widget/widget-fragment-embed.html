@@ -3,13 +3,8 @@
   window.VISITOR_REGISTRATION_WIDGET = {
     // идентификатор события
     eventId: "{{eventId}}",
-    // параметры кнопки регистрации
-    button: {
-      text: "Регистрация посетителя",
-      color: "#ffffff",
-      backgroundColor: "#57ae70",
-      className: "visitor-reg-button"
-    },
+    // опционально: parent-элемент встраивания
+    container: '#widget-container',
   };
 </script>
 <script src="{{loaderUrlBase}}/visitor-reg.min.js" type="text/javascript" async></script>
