@@ -48,6 +48,7 @@ export function createExpressApp(params: ExpressAppParams): ExpressApp {
   const sessionStore = createSessionStore();
 
   if (cookieSecure) {
+    // https://gist.github.com/nikmartin/5902176
     app.enable('trust proxy');
   }
 

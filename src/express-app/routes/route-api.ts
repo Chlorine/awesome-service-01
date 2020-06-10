@@ -3,6 +3,7 @@ import * as HttpErrors from 'http-errors';
 import * as cors from 'cors';
 import * as bodyParser from 'body-parser';
 import * as passport from 'passport';
+import * as _ from 'lodash';
 
 import { API, IApiRequest } from '../../api/index';
 import { GenericObject } from '../../interfaces/common-front';
@@ -28,13 +29,19 @@ const prepareApiRequest = (req: Request): IApiRequest => {
     throw new HttpErrors.BadRequest(`Некорректный запрос (${valErrText})`);
   }
 
+  let remoteAddress = req.connection.remoteAddress;
+
+  if (req.headers && req.headers['X-Real-IP'] && _.isString(req.headers['X-Real-IP'])) {
+    remoteAddress = req.headers['X-Real-IP'];
+  }
+
   return {
     source: 'http',
     target: reqBody['target'],
     action: reqBody['action'],
     params: reqBody,
     user: req.user as IUser,
-    remoteAddress: req.connection.remoteAddress,
+    remoteAddress,
     req,
   };
 };
