@@ -47,6 +47,10 @@ export function createExpressApp(params: ExpressAppParams): ExpressApp {
 
   const sessionStore = createSessionStore();
 
+  if (cookieSecure) {
+    app.enable('trust proxy');
+  }
+
   app
     .use((req: Request, res: Response, next: NextFunction) => {
       httpLogger && httpLogger.verbose(`${req.method} ${req.url}`);
