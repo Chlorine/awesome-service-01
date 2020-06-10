@@ -30,11 +30,8 @@ const prepareApiRequest = (req: Request): IApiRequest => {
   }
 
   let remoteAddress = req.connection.remoteAddress;
-
-  console.log(JSON.stringify(req.headers, null, 2));
-
-  if (req.headers && req.headers['X-Real-IP'] && _.isString(req.headers['X-Real-IP'])) {
-    remoteAddress = req.headers['X-Real-IP'];
+  if (req.headers && req.headers['x-real-ip'] && _.isString(req.headers['x-real-ip'])) {
+    remoteAddress = req.headers['x-real-ip'];
   }
 
   return {
