@@ -29,7 +29,7 @@
       "maxLength": 64
     },
     "birthday": {
-      "type": "string",
+      "type": ["string", "null"],
       "description": "День рождения YYYY-MM-DD",
       "format": "date"
     },
