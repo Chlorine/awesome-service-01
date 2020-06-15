@@ -25,7 +25,7 @@ export type EventPlaceInfo = {
  */
 export type SurveyAnswerInfo = {
   questionId: string;
-  value: boolean | string;
+  value: boolean | string | string[];
 };
 
 /**

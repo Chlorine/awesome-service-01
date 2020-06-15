@@ -11,7 +11,7 @@ export interface ISurveyAnswer extends Document {
   question: ISurveyQuestion['_id'];
   visitor: IEventVisitor['_id'];
 
-  value: boolean | string;
+  value: boolean | string | string[];
 
   asSurveyAnswerInfo(): SurveyAnswerInfo;
 }

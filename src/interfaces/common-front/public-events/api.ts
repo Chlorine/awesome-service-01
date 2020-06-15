@@ -209,6 +209,16 @@ export type ApiActions = {
       widgetUrlBase: string;
     };
   };
+  /**
+   * Получить кол-во зарегистрированных посетителей
+   * Auth: user
+   */
+  getEventVisitorCount: {
+    params: { id: string };
+    results: {
+      count: number;
+    };
+  };
 };
 
 export type Results<AN extends keyof ApiActions> = ApiActions[AN]['results'];

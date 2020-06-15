@@ -34,7 +34,7 @@ export type RegisterEventVisitorParams = {
   eventId: string;
   visitor: EventVisitorBase;
 
-  surveyAnswers?: [SurveyAnswerInfo];
+  surveyAnswers?: SurveyAnswerInfo[];
 
   sourceType: EventVisitorSourceType;
   sourceData?: EventVisitorSourceData;

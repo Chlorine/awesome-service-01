@@ -31,6 +31,17 @@ export class PublicEventsApiImpl extends ApiImpl {
     super('/api/public-events', 'API.PEvents');
   }
 
+  private async getEvent(id: string, ctx: IApiContext): Promise<IPublicEvent> {
+    const event = await PublicEvent.findById(id);
+    if (!event) {
+      throw new HttpErrors.NotFound(`Мероприятие не найдено`);
+    }
+
+    checkObjectOwnership(ctx, event);
+
+    return event;
+  }
+
   handlers = {
     /**
      * Создание нового публичного мероприятия
@@ -98,16 +109,9 @@ export class PublicEventsApiImpl extends ApiImpl {
       ctx: IApiContext,
     ): ResultsPromise<'updateEvent'> => {
       const lh = new LogHelper(this, `updateEvent|${ctx.cid}`);
-
-      const u = checkAuth(ctx);
       const { id } = params;
 
-      const event = await PublicEvent.findById(id);
-      if (!event) {
-        throw new HttpErrors.NotFound(`Мероприятие не найдено`);
-      }
-
-      checkObjectOwnership(ctx, event);
+      const event = await this.getEvent(id, ctx);
 
       Utils.setEntityProperty(event, 'name', params.name);
       Utils.setEntityProperty(event, 'description', params.description);
@@ -175,14 +179,8 @@ export class PublicEventsApiImpl extends ApiImpl {
      * @param ctx
      */
     getEvent: async (params: Params<'getEvent'>, ctx: IApiContext): ResultsPromise<'getEvent'> => {
-      const u = checkAuth(ctx);
-
       const { id } = params;
-      const event = await PublicEvent.findById(id);
-      if (!event) {
-        throw new HttpErrors.NotFound(`Мероприятие не найдено`);
-      }
-      checkObjectOwnership(ctx, event);
+      const event = await this.getEvent(id, ctx);
 
       return {
         event: event.asPublicEventInfo(),
@@ -680,7 +678,7 @@ export class PublicEventsApiImpl extends ApiImpl {
         }
       });
 
-      // console.log(JSON.stringify(res, null, 2));
+      // console.log(JSON.stringify(aggRes, null, 2));
 
       return { summary };
     },
@@ -694,13 +692,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       ctx: IApiContext,
     ): ResultsPromise<'getEventFastTrackLink'> => {
       const { id } = params;
-
-      const event = await PublicEvent.findById(id);
-      if (!event) {
-        throw new HttpErrors.NotFound(`Мероприятие не найдено`);
-      }
-
-      checkObjectOwnership(ctx, event);
+      const event = await this.getEvent(id, ctx);
 
       return {
         link: CONFIG.common.fastTrackUrlBase + `/start/${event.id}`,
@@ -716,13 +708,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       ctx: IApiContext,
     ): ResultsPromise<'getEventWidgetFragment'> => {
       const { id } = params;
-
-      const event = await PublicEvent.findById(id);
-      if (!event) {
-        throw new HttpErrors.NotFound(`Мероприятие не найдено`);
-      }
-
-      checkObjectOwnership(ctx, event);
+      const event = await this.getEvent(id, ctx);
 
       let fragments: string[] = [];
 
@@ -748,6 +734,22 @@ export class PublicEventsApiImpl extends ApiImpl {
       return {
         fragments,
         widgetUrlBase: CONFIG.common.visitorRegWidgetUrlBase,
+      };
+    },
+    /**
+     * Получить кол-во зарегистрированных посетителей
+     * @param params
+     * @param ctx
+     */
+    getEventVisitorCount: async (
+      params: Params<'getEventVisitorCount'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getEventVisitorCount'> => {
+      const { id } = params;
+      const event = await this.getEvent(id, ctx);
+
+      return {
+        count: await EventVisitor.count({ event: event.id }),
       };
     },
   };
