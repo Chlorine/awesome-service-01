@@ -50,6 +50,7 @@ jspm_packages/
 
 # TypeScript v1 declaration files
 typings/
+!typings/mongoose-paginate-v2.d.ts
 
 # TypeScript cache
 *.tsbuildinfo

@@ -2,6 +2,7 @@ import * as HttpErrors from 'http-errors';
 import * as moment from 'moment';
 import * as mongoose from 'mongoose';
 import { join } from 'path';
+import * as _ from 'lodash';
 
 import { ApiImpl } from '../../api/impl';
 import { Params, Results, ResultsPromise } from '../../interfaces/common-front/public-events/api';
@@ -25,6 +26,9 @@ import { SurveyQuestionInfo } from '../../interfaces/common-front/public-events/
 
 import CONFIG from '../../../config';
 import { nj, readTemplateFile } from '../../utils/template-helpers';
+import { PaginationResults } from '../../interfaces/common-front/index';
+import { FilterQuery } from 'mongoose';
+import { EventVisitorFullInfo } from '../../interfaces/common-front/public-events/visitor';
 
 export class PublicEventsApiImpl extends ApiImpl {
   constructor() {
@@ -167,10 +171,22 @@ export class PublicEventsApiImpl extends ApiImpl {
       ctx: IApiContext,
     ): ResultsPromise<'getEvents'> => {
       const u = await getUser(ctx, params.userId);
-      const events = await PublicEvent.findUserEvents(u.id);
+
+      const { limit, offset } = params;
+      const pgRes = await PublicEvent.paginate(
+        { user: u.id },
+        {
+          limit,
+          offset,
+          sort: {
+            start: 'asc',
+          },
+        },
+      );
 
       return {
-        events: events.map(e => e.asPublicEventInfo()),
+        ...(Utils.deleteProperties(pgRes, ['docs']) as PaginationResults),
+        events: pgRes.docs.map(e => e.asPublicEventInfo()),
       };
     },
     /**
@@ -275,10 +291,23 @@ export class PublicEventsApiImpl extends ApiImpl {
       ctx: IApiContext,
     ): ResultsPromise<'getSurveys'> => {
       const u = await getUser(ctx, params.userId);
-      const surveys = await Survey.findUserSurveys(u.id);
+
+      const { limit, offset } = params;
+      const pgRes = await Survey.paginate(
+        { user: u.id },
+        {
+          limit,
+          offset,
+          sort: {
+            // анкеты: desc по времени изменения
+            updatedAt: -1,
+          },
+        },
+      );
 
       return {
-        surveys: surveys.map(s => s.asSurveyInfo()),
+        ...(Utils.deleteProperties(pgRes, ['docs']) as PaginationResults),
+        surveys: pgRes.docs.map(s => s.asSurveyInfo()),
       };
     },
     /**
@@ -749,7 +778,112 @@ export class PublicEventsApiImpl extends ApiImpl {
       const event = await this.getEvent(id, ctx);
 
       return {
-        count: await EventVisitor.count({ event: event.id }),
+        count: await EventVisitor.countDocuments({ event: event.id }),
+      };
+    },
+    /**
+     * Получить зарегистрированных посетителей мероприятия
+     * @param params
+     * @param ctx
+     */
+    getEventVisitors: async (
+      params: Params<'getEventVisitors'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getEventVisitors'> => {
+      const { eventId } = params;
+      const event = await this.getEvent(eventId, ctx);
+
+      const { limit, offset, substring, sortOrder } = params;
+
+      let query: FilterQuery<IEventVisitor> = {
+        $and: [{ event: event.id }],
+      };
+
+      if (substring) {
+        // $text - полнотекстовый поиск - не умеет то чего я хочу
+        // надо тупо по подстроке
+
+        const regExp = new RegExp(substring, 'i');
+        query.$and!.push({
+          $or: [
+            { lastName: regExp },
+            { firstName: regExp },
+            { middleName: regExp },
+            { companyName: regExp },
+            { position: regExp },
+            { email: regExp },
+            { phone: regExp },
+          ],
+        });
+      }
+
+      let sort: object | undefined = undefined;
+
+      switch (sortOrder) {
+        case 'reg-timestamp-asc':
+          sort = { createdAt: 'asc' };
+          break;
+        case 'reg-timestamp-desc':
+          sort = { createdAt: 'desc' };
+          break;
+        case 'last-name-asc':
+          sort = { lastName: 'asc' };
+          break;
+        case 'last-name-desc':
+          sort = { lastName: 'desc' };
+          break;
+      }
+
+      const pgRes = await EventVisitor.paginate(query, {
+        limit,
+        offset,
+        sort,
+      });
+
+      return {
+        ...(Utils.deleteProperties(pgRes, ['docs']) as PaginationResults),
+        visitors: pgRes.docs.map(v => v.asVisitorInfo()),
+      };
+    },
+    /**
+     * Получение данных посетителя мероприятия
+     * @param params
+     * @param ctx
+     */
+    getEventVisitor: async (
+      params: Params<'getEventVisitor'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getEventVisitor'> => {
+      const { id } = params;
+      const v = await EventVisitor.findById(id);
+      if (!v) {
+        throw new HttpErrors.NotFound(`Посетитель не найден`);
+      }
+
+      const event = await PublicEvent.findById(v.event);
+      if (!event) {
+        this.logger.error(`getEventVisitor: cannot find event ${v.event}`);
+        throw new Error('Внутренняя ошибка');
+      }
+
+      checkObjectOwnership(ctx, event);
+
+      const visitor: EventVisitorFullInfo = {
+        ...v.asVisitorInfo(),
+        eventName: event.name,
+        regRemoteAddr: v.regRemoteAddress,
+        uaInfo: v.uaInfo,
+        surveyAnswers: [],
+      };
+
+      if (event.survey) {
+        visitor.surveyAnswers = (await SurveyAnswer.findVisitorAnswers(v.id, event.survey)).map(a =>
+          a.asSurveyAnswerInfo(),
+        );
+      }
+
+      return {
+        visitor,
       };
     },
   };

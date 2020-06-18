@@ -3,12 +3,22 @@
   "title": "Получение анкет пользователя",
   "type": "object",
   "additionalProperties": true,
-  "required": [],
+  "required": ["limit"],
   "properties": {
     "userId": {
       "description": "ID пользователя (опционально)",
       "type": "string",
       "pattern": "^[0-9a-fA-F]{24}$"
+    },
+    "limit": {
+      "description": "Кол-во элементов на странице",
+      "type": "integer",
+      "minimum": 1
+    },
+    "offset": {
+      "description": "Кол-во пропускаемых элементов",
+      "type": "integer",
+      "minimum": 0
     }
   }
 }

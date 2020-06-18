@@ -1,10 +1,11 @@
-import { Document, Schema, model, Model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
 import * as moment from 'moment';
+import { PaginateModel } from 'mongoose';
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 import { SurveyInfo } from '../../../interfaces/common-front/public-events/survey';
 import { IUser } from '../../users/models/user';
 import SurveyQuestion, { ISurveyQuestion } from './survey-question';
-import * as mongoose from 'mongoose';
 
 export interface ISurvey extends Document {
   user: IUser['_id'];
@@ -39,6 +40,8 @@ const SurveySchema = new Schema(
   },
   { timestamps: true },
 );
+
+SurveySchema.plugin(mongoosePaginate);
 
 SurveySchema.virtual('questions', {
   ref: 'SurveyQuestion',
@@ -96,7 +99,7 @@ SurveySchema.statics.onQuestionsChange = async function(surveyId: string): Promi
   await this.findOneAndUpdate({ _id: surveyId }, { $inc: { qChanges: 1 } });
 };
 
-export interface ISurveyModel extends Model<ISurvey> {
+export interface ISurveyModel extends PaginateModel<ISurvey> {
   findUserSurveys(userId: string): Promise<ISurvey[]>;
   findWithQuestions(id: string): Promise<ISurveyWithQuestions | null>;
   onQuestionsChange(surveyId: string): Promise<void>;

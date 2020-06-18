@@ -1,5 +1,6 @@
 import * as moment from 'moment';
 import { Document, Schema, model, Model } from 'mongoose';
+import { PaginateModel } from 'mongoose';
 
 import {
   EventVisitorBase,
@@ -10,6 +11,8 @@ import {
 
 import { UserAgentInfo } from '../../../utils/user-agent-info';
 import { IPublicEvent } from './event';
+
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 declare type IEventVisitorBase = Pick<
   EventVisitorBase,
@@ -72,6 +75,21 @@ const VisitorSchema = new Schema(
   { timestamps: true },
 );
 
+VisitorSchema.plugin(mongoosePaginate);
+
+VisitorSchema.index(
+  {
+    lastName: 'text',
+    firstName: 'text',
+    middleName: 'text',
+    companyName: 'text',
+    position: 'text',
+    phone: 'text',
+    email: 'text',
+  },
+  { name: 'VisitorTextIdx', default_language: 'ru' },
+);
+
 VisitorSchema.methods.asVisitorInfo = function(): EventVisitorInfo {
   return {
     id: this._id.toHexString(),
@@ -89,10 +107,13 @@ VisitorSchema.methods.asVisitorInfo = function(): EventVisitorInfo {
 
     gender: this.gender,
     birthday: this.birthday ? moment.utc(this.birthday).format('YYYY-MM-DD') : null,
+
+    regTimestamp: moment.utc(this.updatedAt).toISOString(),
+    sourceType: this.sourceType,
   };
 };
 
-export interface IEventVisitorModel extends Model<IEventVisitor> {}
+export interface IEventVisitorModel extends PaginateModel<IEventVisitor> {}
 
 export default model<IEventVisitor, IEventVisitorModel>(
   'EventVisitor',

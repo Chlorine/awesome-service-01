@@ -7,8 +7,9 @@ import {
   UpdateSurveyQuestionParams,
 } from './survey-question';
 
-import { RegisterEventVisitorParams, EventVisitorInfo } from './visitor';
+import { RegisterEventVisitorParams, EventVisitorInfo, EventVisitorFullInfo } from './visitor';
 import { PublicEventFullInfo, SummaryEventsInfo } from './index';
+import { BasePaginationOptions, PaginationResults } from '../index';
 
 export type ApiActions = {
   /**
@@ -38,10 +39,10 @@ export type ApiActions = {
   getEvents: {
     params: {
       userId?: string;
-    };
+    } & BasePaginationOptions;
     results: {
       events: PublicEventInfo[];
-    };
+    } & PaginationResults;
   };
   /**
    * Получить мероприятие по ID
@@ -97,10 +98,10 @@ export type ApiActions = {
   getSurveys: {
     params: {
       userId?: string;
-    };
+    } & BasePaginationOptions;
     results: {
       surveys: SurveyInfo[];
-    };
+    } & PaginationResults;
   };
   /**
    * Получить анкету по ID
@@ -217,6 +218,32 @@ export type ApiActions = {
     params: { id: string };
     results: {
       count: number;
+    };
+  };
+  /**
+   * Получить зарегистрированных посетителей мероприятия
+   * Auth: user
+   */
+  getEventVisitors: {
+    params: {
+      eventId: string;
+      substring?: string;
+      sortOrder?: 'reg-timestamp-asc' | 'reg-timestamp-desc' | 'last-name-asc' | 'last-name-desc';
+    } & BasePaginationOptions;
+    results: {
+      visitors: EventVisitorInfo[];
+    } & PaginationResults;
+  };
+  /**
+   * Получение данных посетителя мероприятия
+   * Auth: user
+   */
+  getEventVisitor: {
+    params: {
+      id: string;
+    };
+    results: {
+      visitor: EventVisitorFullInfo;
     };
   };
 };

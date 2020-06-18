@@ -309,6 +309,40 @@ export class Utils {
       entity[propName] = value;
     }
   }
+
+  static deleteProperties<S, P extends keyof S, C = Pick<S, Exclude<keyof S, P>>>(
+    source: S,
+    props: P[],
+  ): C {
+    let clone: any = {};
+
+    Object.keys(source).forEach(propName => {
+      if (props.indexOf(<P>propName) === -1) {
+        let p = <P>propName;
+
+        clone[p] = source[p];
+      }
+    });
+
+    return clone as C;
+  }
+
+  static saveProperties<S, P extends keyof S, C extends Pick<S, Extract<keyof S, P>>>(
+    source: S,
+    props: P[],
+  ): C {
+    let clone: any = {};
+
+    Object.keys(source).forEach(propName => {
+      if (props.indexOf(<P>propName) !== -1) {
+        let p = <P>propName;
+
+        clone[p] = source[p];
+      }
+    });
+
+    return clone;
+  }
 }
 
 // console.log('--------: ' + Utils.Formatter.performanceCount(0));

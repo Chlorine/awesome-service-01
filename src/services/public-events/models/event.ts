@@ -1,5 +1,7 @@
-import { Document, Schema, model, Model } from 'mongoose';
+import { Document, Schema, model } from 'mongoose';
 import * as moment from 'moment';
+import { PaginateModel } from 'mongoose';
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 import { IUser } from '../../users/models/user';
 import { PublicEventInfo } from '../../../interfaces/common-front/public-events/event';
@@ -61,6 +63,8 @@ const PublicEventSchema = new Schema(
 
   { timestamps: true },
 );
+
+PublicEventSchema.plugin(mongoosePaginate);
 
 PublicEventSchema.methods.asPublicEventInfo = function(): PublicEventInfo {
   return {
@@ -129,7 +133,7 @@ export interface IPublicEventWithSurvey
   asPublicEventFullInfo(): PublicEventFullInfo;
 }
 
-export interface IPublicEventModel extends Model<IPublicEvent> {
+export interface IPublicEventModel extends PaginateModel<IPublicEvent> {
   findUserEvents(userId: string): Promise<IPublicEvent[]>;
   findWithSurvey(id: string): Promise<IPublicEventWithSurvey | null>;
 }
