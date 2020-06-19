@@ -39,6 +39,7 @@ export type ApiActions = {
   getEvents: {
     params: {
       userId?: string;
+      fromArchive?: boolean;
     } & BasePaginationOptions;
     results: {
       events: PublicEventInfo[];

@@ -172,17 +172,27 @@ export class PublicEventsApiImpl extends ApiImpl {
     ): ResultsPromise<'getEvents'> => {
       const u = await getUser(ctx, params.userId);
 
-      const { limit, offset } = params;
-      const pgRes = await PublicEvent.paginate(
-        { user: u.id },
-        {
-          limit,
-          offset,
-          sort: {
-            start: 'asc',
-          },
+      const { fromArchive, limit, offset } = params;
+
+      let query: FilterQuery<IPublicEvent> = {
+        $and: [{ user: u.id }],
+      };
+
+      const now = moment.utc();
+
+      if (fromArchive) {
+        query.$and!.push({ end: { $lt: now.toDate() } });
+      } else {
+        query.$and!.push({ end: { $gt: now.toDate() } });
+      }
+
+      const pgRes = await PublicEvent.paginate(query, {
+        limit,
+        offset,
+        sort: {
+          start: 'asc',
         },
-      );
+      });
 
       return {
         ...(Utils.deleteProperties(pgRes, ['docs']) as PaginationResults),
