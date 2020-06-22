@@ -5,11 +5,13 @@ import { ISurveyQuestion } from './survey-question';
 import { ISurvey } from './survey';
 
 import { SurveyAnswerInfo } from '../../../interfaces/common-front/public-events';
+import { IPublicEvent } from './event';
 
 export interface ISurveyAnswer extends Document {
   survey: ISurvey['_id'];
   question: ISurveyQuestion['_id'];
   visitor: IEventVisitor['_id'];
+  event: IPublicEvent['_id'];
 
   value: boolean | string | string[];
 
@@ -30,6 +32,11 @@ const AnswerSchema = new Schema<ISurveyAnswer>({
   visitor: {
     type: Schema.Types.ObjectId,
     ref: 'EventVisitor',
+    index: true,
+  },
+  event: {
+    type: Schema.Types.ObjectId,
+    ref: 'PublicEvent',
     index: true,
   },
   value: {

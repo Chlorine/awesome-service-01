@@ -29,6 +29,11 @@ import { nj, readTemplateFile } from '../../utils/template-helpers';
 import { PaginationResults } from '../../interfaces/common-front/index';
 import { FilterQuery } from 'mongoose';
 import { EventVisitorFullInfo } from '../../interfaces/common-front/public-events/visitor';
+import {
+  ANSWER_NO,
+  ANSWER_YES,
+  SurveyQuestionAnswersInfo,
+} from '../../interfaces/common-front/public-events/index';
 
 export class PublicEventsApiImpl extends ApiImpl {
   constructor() {
@@ -329,8 +334,6 @@ export class PublicEventsApiImpl extends ApiImpl {
       params: Params<'getSurvey'>,
       ctx: IApiContext,
     ): ResultsPromise<'getSurvey'> => {
-      const u = checkAuth(ctx);
-
       const { id } = params;
       const survey = await Survey.findWithQuestions(id);
       if (!survey) {
@@ -629,6 +632,7 @@ export class PublicEventsApiImpl extends ApiImpl {
                     survey: survey.id,
                     question: q.id,
                     visitor: visitor.id,
+                    event: event.id,
                   },
                   { $set: { value: a.value } },
                   { upsert: true },
@@ -666,6 +670,7 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       let aggRes = await PublicEvent.aggregate<{
         name: string;
+        end: Date;
         visitors: Array<{ count: number }>;
       }>([
         {
@@ -699,6 +704,7 @@ export class PublicEventsApiImpl extends ApiImpl {
           $replaceRoot: {
             newRoot: {
               _id: '$_id',
+              end: '$end',
               name: '$name',
               visitors: '$visitors',
             },
@@ -706,11 +712,19 @@ export class PublicEventsApiImpl extends ApiImpl {
         },
       ]);
 
+      const now = moment
+        .utc()
+        .toDate()
+        .getTime();
+
       aggRes.forEach(entry => {
         const { visitors } = entry;
 
         summary.eventCount++;
-        summary.actualEventCount++; // TODO: по времени?
+
+        if (entry.end.getTime() >= now) {
+          summary.actualEventCount++;
+        }
 
         if (visitors && visitors.length > 0) {
           summary.totalVisitors += visitors[0].count;
@@ -894,6 +908,105 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       return {
         visitor,
+      };
+    },
+    /**
+     * Получение ответов на вопрос анкеты
+     * @param params
+     * @param ctx
+     */
+    getSurveyQuestionAnswers: async (
+      params: Params<'getSurveyQuestionAnswers'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getSurveyQuestionAnswers'> => {
+      const { surveyId, questionId } = params;
+
+      const survey = await Survey.findWithQuestions(surveyId);
+      if (!survey) throw new HttpErrors.NotFound(`Анкета не найдена`);
+      checkObjectOwnership(ctx, survey);
+
+      const answersInfo: SurveyQuestionAnswersInfo = {
+        questionId,
+        chosenVariants: {},
+      };
+
+      const question = survey.questions.find(q => q.id === questionId);
+      if (question) {
+        switch (question.answerType) {
+          case 'YesNo':
+            answersInfo.chosenVariants[ANSWER_YES] = 0;
+            answersInfo.chosenVariants[ANSWER_NO] = 0;
+            break;
+          case 'OneOf':
+          case 'SomeOf':
+            question.answerVariants.forEach(v => (answersInfo.chosenVariants[v] = 0));
+            break;
+        }
+      }
+
+      let query: FilterQuery<ISurveyAnswer> = {
+        survey: survey.id,
+        question: mongoose.Types.ObjectId(questionId),
+      };
+
+      if (params.eventId) {
+        query.event = mongoose.Types.ObjectId(params.eventId);
+      }
+
+      let answer: ISurveyAnswer | null;
+      let tempValues: string[];
+
+      const cursor = await SurveyAnswer.find(query).cursor();
+      for (;;) {
+        answer = await cursor.next();
+        if (!answer) break;
+
+        tempValues = [];
+
+        if (typeof answer.value === 'boolean') {
+          tempValues = [answer.value ? ANSWER_YES : ANSWER_NO];
+        } else if (typeof answer.value === 'string') {
+          tempValues = [answer.value];
+        } else if (Array.isArray(answer.value)) {
+          tempValues = answer.value.filter((v: any) => typeof v === 'string');
+        }
+
+        tempValues.forEach(v => {
+          if (!answersInfo.chosenVariants[v]) {
+            answersInfo.chosenVariants[v] = 1;
+          } else {
+            answersInfo.chosenVariants[v]++;
+          }
+        });
+      }
+
+      await cursor.close();
+
+      return {
+        answersInfo,
+      };
+    },
+    /**
+     * Получение информации о мероприятиях с некоторой анкетой
+     * @param params
+     * @param ctx
+     */
+    getEventsBySurvey: async (
+      params: Params<'getEventsBySurvey'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'getEventsBySurvey'> => {
+      const { surveyId } = params;
+
+      const survey = await Survey.findById(surveyId);
+      if (!survey) throw new HttpErrors.NotFound(`Анкета не найдена`);
+      checkObjectOwnership(ctx, survey);
+
+      const events = await PublicEvent.find({ survey: survey.id }).sort({ start: 'asc' });
+
+      return {
+        events: events.map(e =>
+          Utils.saveProperties(e.asPublicEventInfo(), ['id', 'name', 'start', 'end']),
+        ),
       };
     },
   };

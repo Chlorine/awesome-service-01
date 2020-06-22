@@ -8,7 +8,12 @@ import {
 } from './survey-question';
 
 import { RegisterEventVisitorParams, EventVisitorInfo, EventVisitorFullInfo } from './visitor';
-import { PublicEventFullInfo, SummaryEventsInfo } from './index';
+import {
+  PublicEventFullInfo,
+  SummaryEventsInfo,
+  SurveyAnswerInfo,
+  SurveyQuestionAnswersInfo,
+} from './index';
 import { BasePaginationOptions, PaginationResults } from '../index';
 
 export type ApiActions = {
@@ -245,6 +250,32 @@ export type ApiActions = {
     };
     results: {
       visitor: EventVisitorFullInfo;
+    };
+  };
+  /**
+   * Получение ответов на вопрос анкеты
+   * Auth: user
+   */
+  getSurveyQuestionAnswers: {
+    params: {
+      surveyId: string;
+      questionId: string;
+      eventId?: string;
+    };
+    results: {
+      answersInfo: SurveyQuestionAnswersInfo;
+    };
+  };
+  /**
+   * Получение информации о мероприятиях с некоторой анкетой
+   * Auth: user
+   */
+  getEventsBySurvey: {
+    params: {
+      surveyId: string;
+    };
+    results: {
+      events: Array<Pick<PublicEventInfo, 'id' | 'name' | 'start' | 'end'>>;
     };
   };
 };

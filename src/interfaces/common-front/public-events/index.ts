@@ -28,6 +28,17 @@ export type SurveyAnswerInfo = {
   value: boolean | string | string[];
 };
 
+export const ANSWER_YES = 'Да';
+export const ANSWER_NO = 'Нет';
+
+/**
+ * Суммарная инфа по вариантам ответа на вопрос
+ */
+export type SurveyQuestionAnswersInfo = {
+  questionId: string;
+  chosenVariants: { [answerVariantAsKey: string]: number };
+};
+
 /**
  * Мероприятие с анкетой
  */
