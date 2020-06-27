@@ -19,7 +19,24 @@ const loadConfig = (): IAppConfig => {
         'VISITOR_REG_WIDGET_URL_BASE',
         'https://visitor-reg-widget.cloudtickets.io',
       ),
-      secureCookies: Env.getBool('SECURE_COOKIES', true), // TODO: понять как это делается правильно с учетом nginx
+      secureCookies: Env.getBool('SECURE_COOKIES', true),
+    },
+
+    uploads: {
+      maxFileSizeInBytes: Env.getInt('UPLOAD_MAX_FILE_SIZE', 16 * 1024 * 1024),
+      imageFileExtensions: ['jpg', 'png', 'gif'],
+    },
+
+    s3: {
+      clientOptions: {
+        endPoint: Env.getStr('S3_ENDPOINT', 'localhost'),
+        accessKey: Env.getStr('S3_ACCESS_KEY', 'minio'),
+        secretKey: Env.getStr('S3_SECRET_KEY', 'invalid_s3_secret_key'),
+        useSSL: Env.getBool('S3_SSL', false),
+        port: Env.getInt('S3_PORT', 9000),
+      },
+      bucket: Env.getStr('S3_BUCKET', 'awesome-service'),
+      publicUrlBase: Env.getStr('S3_PUBLIC_URL_BASE', 'http://localhost:9000'),
     },
 
     logs: {

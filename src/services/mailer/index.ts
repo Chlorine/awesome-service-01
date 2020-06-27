@@ -222,21 +222,4 @@ export class Mailer {
 
     return sendRes;
   }
-
-  async testSend() {
-    const opts: NM.SendMailOptions = {
-      from: {
-        address: CONFIG.mail.defaultFrom,
-        name: CONFIG.mail.defaultFromName,
-      },
-      to: 'sergey.khlobystov@gmail.com',
-      subject: 'тест-test',
-      text: 'ТЕКСТОВОЕ!',
-      html: '<body><h3>БОДИ!</h3> квик браун фокс</body>',
-    };
-
-    const sendRes = await this.transport.sendMail(opts);
-
-    this.logger.debug('sent!', sendRes);
-  }
 }

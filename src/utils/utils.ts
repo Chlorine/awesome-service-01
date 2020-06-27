@@ -7,6 +7,7 @@ import { createHash } from 'crypto';
 const mkdirp = require('mkdirp');
 
 import CONFIG from './../../config';
+import { GenericObject } from '../interfaces/common-front/index';
 
 /**
  * Общеупотребительное
@@ -342,6 +343,20 @@ export class Utils {
     });
 
     return clone;
+  }
+
+  static stringifyApiParams(params: GenericObject): string {
+    return JSON.stringify(
+      _.omit(params, [
+        'target',
+        'action',
+        '__delay',
+        '__genErr',
+        'password',
+        'newPassword',
+        'oldPassword',
+      ]),
+    );
   }
 }
 

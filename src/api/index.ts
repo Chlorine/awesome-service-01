@@ -1,9 +1,10 @@
 import * as HttpErrors from 'http-errors';
 import { Request as ExpressRequest } from 'express';
 import * as _ from 'lodash';
+import * as FileType from 'file-type';
 
 import { GenericObject } from '../interfaces/common-front';
-import { ApiResults } from '../interfaces/common-front/index';
+import { ApiResults, UploadParamsBase } from '../interfaces/common-front/index';
 import { Core } from '../core';
 import { getLogger, LogHelper } from '../utils/logger';
 import { ApiImpl } from './impl';
@@ -14,6 +15,7 @@ import { PublicEventsApiImpl } from '../services/public-events/api-impl';
 import { UsersApiImpl } from '../services/users/api-impl';
 
 import { IUser } from '../services/users/models/user';
+import { checkObjectOwnership, UploadedFileHandlerParams } from './impl-utils';
 
 export interface IApiRequest {
   source: 'http' | 'ws' | 'other';
@@ -36,7 +38,15 @@ export interface IApiContext {
   remoteAddress?: string;
   req?: ExpressRequest;
   cid: string;
+  userInfo: string;
 }
+
+export const makeUserInfoStr = (
+  user: IUser | null | undefined,
+  remoteAddress: string | undefined,
+): string => {
+  return `User '${user ? user.email : 'anonymous'}' (${remoteAddress || 'unknown_ip'})`;
+};
 
 export class API {
   readonly logger = getLogger('API');
@@ -92,6 +102,7 @@ export class API {
       remoteAddress: request.remoteAddress,
       req: request.req,
       user: request.user,
+      userInfo: makeUserInfoStr(request.user, request.remoteAddress),
     };
 
     const { target, action, source, params } = request;
@@ -118,5 +129,63 @@ export class API {
     }
 
     return results!;
+  }
+
+  async processUploadedFile(
+    params: UploadParamsBase & { user: IUser; remoteAddress?: string },
+    filePath: string,
+  ): Promise<{ publicUrl?: string }> {
+    const { type, objectId, user, remoteAddress } = params;
+
+    let publicUrl: string | undefined;
+    const cid = makeCorrelationId();
+    const userInfo = makeUserInfoStr(user, remoteAddress);
+
+    const lh = new LogHelper(this, `processUploadedFile|${cid}`, 'info');
+    lh.onStart(`${userInfo} is uploading '${type}' for '${objectId}'...`);
+
+    try {
+      const fileType = await FileType.fromFile(filePath);
+      if (!fileType) {
+        // noinspection ExceptionCaughtLocallyJS
+        throw new Error(`Не удалось определить тип файла`);
+      }
+
+      const handlerParams: UploadedFileHandlerParams = {
+        user,
+        remoteAddress,
+        objectId,
+        cid,
+        filePath,
+        fileExt: fileType.ext,
+      };
+
+      switch (type) {
+        case 'user-avatar':
+          publicUrl = await this.core.users.setAvatar(handlerParams);
+          break;
+        case 'public-event-image':
+        case 'public-event-logo':
+          {
+            const event = await this.core.publicEvents.getEvent(objectId);
+            checkObjectOwnership({ user }, event);
+          }
+          break;
+        default:
+          // noinspection ExceptionCaughtLocallyJS
+          throw new Error('Unsupported object type');
+      }
+
+      lh.onSuccess(`publicUrl: ${publicUrl}`);
+    } catch (err) {
+      lh.onError(err);
+      // @ts-ignore
+      err.cid = cid;
+      throw err;
+    }
+
+    return {
+      publicUrl,
+    };
   }
 }

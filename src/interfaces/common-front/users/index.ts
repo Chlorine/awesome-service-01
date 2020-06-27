@@ -14,6 +14,8 @@ export type UserInfo = {
   emailConfirmed: boolean;
   birthday: string | null;
   gender: 'male' | 'female' | null;
+
+  avatar: string | null;
 };
 
 export type WebUISettings = {

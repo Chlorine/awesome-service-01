@@ -1,0 +1,19 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Параметры запроса на upload",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["type", "objectId"],
+  "properties": {
+    "type": {
+      "description": "Тип аплоадимого",
+      "type": "string",
+      "enum": ["user-avatar", "public-event-logo", "public-event-image"]
+    },
+    "objectId": {
+      "description": "ID объекта, к которому относится аплоажемое",
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{24}$"
+    }
+  }
+}

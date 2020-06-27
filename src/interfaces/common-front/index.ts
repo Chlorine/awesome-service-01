@@ -17,7 +17,7 @@ export type GeoPoint = {
   coordinates: number[];
 };
 
-export type BasePaginationOptions = {
+export type PaginationOptionsBase = {
   limit: number;
   offset?: number;
 };
@@ -32,4 +32,9 @@ export type PaginationResults = {
   pagingCounter: number;
   hasPrevPage: boolean;
   hasNextPage: boolean;
+};
+
+export type UploadParamsBase = {
+  type: 'user-avatar' | 'public-event-logo' | 'public-event-image';
+  objectId: string;
 };

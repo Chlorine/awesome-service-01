@@ -1,10 +1,18 @@
-import { IApiContext } from './index';
 import * as HttpErrors from 'http-errors';
 
 import { UserRole } from '../interfaces/common-front/users/index';
 import { IUser } from '../services/users/models/user';
 
-export const checkAuth = (ctx: IApiContext): IUser => {
+export type UploadedFileHandlerParams = {
+  user: IUser;
+  remoteAddress?: string;
+  cid: string;
+  objectId: string;
+  filePath: string;
+  fileExt: string;
+};
+
+export const checkAuth = (ctx: { user?: IUser }): IUser => {
   if (!ctx.user) {
     throw new HttpErrors.Unauthorized('Требуется вход в систему');
   }
@@ -12,7 +20,7 @@ export const checkAuth = (ctx: IApiContext): IUser => {
   return ctx.user;
 };
 
-export const checkUserRole = (ctx: IApiContext, role: UserRole): IUser => {
+export const checkUserRole = (ctx: { user?: IUser }, role: UserRole): IUser => {
   const user = checkAuth(ctx);
   if (user.role !== role) {
     throw new HttpErrors.Forbidden('Недостаточно прав');
@@ -21,11 +29,14 @@ export const checkUserRole = (ctx: IApiContext, role: UserRole): IUser => {
   return user;
 };
 
-export const checkUserIsAdmin = (ctx: IApiContext): IUser => {
+export const checkUserIsAdmin = (ctx: { user?: IUser }): IUser => {
   return checkUserRole(ctx, 'admin');
 };
 
-export const checkObjectOwnership = (ctx: IApiContext, object: { user: IUser['_id'] }): void => {
+export const checkObjectOwnership = (
+  ctx: { user?: IUser },
+  object: { user: IUser['_id'] },
+): void => {
   const user = checkAuth(ctx);
 
   if (!object.user.equals(user.id)) {

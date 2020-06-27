@@ -56,30 +56,30 @@ export class CoreApiImpl extends ApiImpl {
       const { mailer } = ctx.core;
       const { incomingToken } = params;
 
-      if (incomingToken === 'die') {
-        let error = new Error('Self-destruct command received');
-
-        setTimeout(() => {
-          throw new Error('Чпок!');
-        }, 30);
-
-        throw error;
-      } else if (incomingToken === 'mail') {
-        const user = checkAuth(ctx);
-
-        if (mailer) {
-          await mailer.sendTemplateMail(
-            {
-              to: ['sergey.khlobystov@yandex.ru'],
-            },
-            'userRegistered',
-            {
-              user: user.asUserInfo(),
-              emailConfirmLink: Core.urlBaseForLinks + `/service-link/confirm-email?token=123`,
-            },
-          );
-        }
-      }
+      // if (incomingToken === 'die') {
+      //   let error = new Error('Self-destruct command received');
+      //
+      //   setTimeout(() => {
+      //     throw new Error('Чпок!');
+      //   }, 30);
+      //
+      //   throw error;
+      // } else if (incomingToken === 'mail') {
+      //   const user = checkAuth(ctx);
+      //
+      //   if (mailer) {
+      //     await mailer.sendTemplateMail(
+      //       {
+      //         to: ['sergey.khlobystov@yandex.ru'],
+      //       },
+      //       'userRegistered',
+      //       {
+      //         user: user.asUserInfo(),
+      //         emailConfirmLink: Core.urlBaseForLinks + `/service-link/confirm-email?token=123`,
+      //       },
+      //     );
+      //   }
+      // }
 
       return {
         code: 124,

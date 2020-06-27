@@ -4,6 +4,8 @@ import * as NJ from 'nunjucks';
 
 export const nj = new NJ.Environment(null, { autoescape: true });
 
+// TODO: запилить кэш
+
 export const readTemplateFile = async (file: string): Promise<string> => {
   return new Promise<string>((resolve, reject) => {
     readFile(file, (err, data) => {

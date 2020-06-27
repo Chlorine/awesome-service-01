@@ -4,6 +4,7 @@ import * as BCryptJS from 'bcryptjs';
 
 import { Utils } from '../../../utils/utils';
 import { UserInfo, UserRole } from '../../../interfaces/common-front/users/index';
+import { makeAvatarPublicUrl } from '../index';
 
 const HASH_SALT_ROUND = 10;
 
@@ -25,6 +26,8 @@ interface IUserSchema extends Document {
 
   birthday?: Date | null;
   gender?: 'male' | 'female' | null;
+
+  avatar?: string | null;
 }
 
 const UserSchema: Schema = new Schema(
@@ -76,6 +79,10 @@ const UserSchema: Schema = new Schema(
       type: String,
       enum: ['male', 'female'],
     },
+    avatar: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true },
 );
@@ -94,7 +101,7 @@ UserSchema.pre<IUser>('save', async function() {
 });
 
 UserSchema.virtual('fullName').get(function() {
-  // TODO: нормальный formatFullName
+  // TODO: взять nameFormatter с морды
   return `${this.lastName} ${this.firstName} ${this.middleName}`;
 });
 
@@ -119,6 +126,7 @@ UserSchema.methods.asUserInfo = function(): UserInfo {
     emailConfirmed: this.emailConfirmed,
     birthday: this.birthday ? moment(this.birthday).format('YYYY-MM-DD') : null,
     gender: this.gender || null,
+    avatar: makeAvatarPublicUrl(this.avatar),
   };
 };
 

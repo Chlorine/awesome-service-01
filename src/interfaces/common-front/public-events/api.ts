@@ -14,7 +14,7 @@ import {
   SurveyAnswerInfo,
   SurveyQuestionAnswersInfo,
 } from './index';
-import { BasePaginationOptions, PaginationResults } from '../index';
+import { PaginationOptionsBase, PaginationResults } from '../index';
 
 export type ApiActions = {
   /**
@@ -45,7 +45,7 @@ export type ApiActions = {
     params: {
       userId?: string;
       fromArchive?: boolean;
-    } & BasePaginationOptions;
+    } & PaginationOptionsBase;
     results: {
       events: PublicEventInfo[];
     } & PaginationResults;
@@ -104,7 +104,7 @@ export type ApiActions = {
   getSurveys: {
     params: {
       userId?: string;
-    } & BasePaginationOptions;
+    } & PaginationOptionsBase;
     results: {
       surveys: SurveyInfo[];
     } & PaginationResults;
@@ -235,7 +235,7 @@ export type ApiActions = {
       eventId: string;
       substring?: string;
       sortOrder?: 'reg-timestamp-asc' | 'reg-timestamp-desc' | 'last-name-asc' | 'last-name-desc';
-    } & BasePaginationOptions;
+    } & PaginationOptionsBase;
     results: {
       visitors: EventVisitorInfo[];
     } & PaginationResults;

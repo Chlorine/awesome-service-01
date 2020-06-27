@@ -59,8 +59,10 @@ export class PublicEventsApiImpl extends ApiImpl {
       params: Params<'createEvent'>,
       ctx: IApiContext,
     ): ResultsPromise<'createEvent'> => {
-      const lh = new LogHelper(this, `createEvent|${ctx.cid}`);
+      const lh = new LogHelper(this, `createEvent|${ctx.cid}`, 'info');
       const u = checkAuth(ctx);
+
+      lh.onStart(`${ctx.userInfo} is creating event (${Utils.stringifyApiParams(params)})`);
 
       const { name, description, place, surveyId } = params;
 
@@ -117,8 +119,10 @@ export class PublicEventsApiImpl extends ApiImpl {
       params: Params<'updateEvent'>,
       ctx: IApiContext,
     ): ResultsPromise<'updateEvent'> => {
-      const lh = new LogHelper(this, `updateEvent|${ctx.cid}`);
+      const lh = new LogHelper(this, `updateEvent|${ctx.cid}`, 'info');
       const { id } = params;
+
+      lh.onStart(`${ctx.userInfo} is updating event (${Utils.stringifyApiParams(params)})`);
 
       const event = await this.getEvent(id, ctx);
 
@@ -245,9 +249,11 @@ export class PublicEventsApiImpl extends ApiImpl {
       params: Params<'createSurvey'>,
       ctx: IApiContext,
     ): ResultsPromise<'createSurvey'> => {
-      const lh = new LogHelper(this, `createSurvey|${ctx.cid}`);
+      const lh = new LogHelper(this, `createSurvey|${ctx.cid}`, 'info');
 
       const { name, description } = params;
+
+      lh.onStart(`${ctx.userInfo} is creating survey (${Utils.stringifyApiParams(params)})`);
 
       const u = checkAuth(ctx);
       const survey = new Survey({
@@ -273,9 +279,10 @@ export class PublicEventsApiImpl extends ApiImpl {
       params: Params<'updateSurvey'>,
       ctx: IApiContext,
     ): ResultsPromise<'updateSurvey'> => {
-      const lh = new LogHelper(this, `updateSurvey|${ctx.cid}`);
+      const lh = new LogHelper(this, `updateSurvey|${ctx.cid}`, 'info');
 
-      const u = checkAuth(ctx);
+      lh.onStart(`${ctx.userInfo} is updating survey (${Utils.stringifyApiParams(params)})`);
+
       const { id } = params;
 
       const survey = await Survey.findWithQuestions(id);
@@ -358,6 +365,10 @@ export class PublicEventsApiImpl extends ApiImpl {
       const lh = new LogHelper(this, `createSurveyQuestion|${ctx.cid}`);
       const { surveyId } = params;
 
+      lh.onStart(
+        `${ctx.userInfo} is creating survey question (${Utils.stringifyApiParams(params)})`,
+      );
+
       const survey = await Survey.findById(surveyId);
       if (!survey) {
         throw new HttpErrors.NotFound(`Анкета не найдена`);
@@ -424,7 +435,11 @@ export class PublicEventsApiImpl extends ApiImpl {
       params: Params<'updateSurveyQuestion'>,
       ctx: IApiContext,
     ): ResultsPromise<'updateSurveyQuestion'> => {
-      const lh = new LogHelper(this, `updateSurveyQuestion|${ctx.cid}`);
+      const lh = new LogHelper(this, `updateSurveyQuestion|${ctx.cid}`, 'info');
+
+      lh.onStart(
+        `${ctx.userInfo} is updating survey question (${Utils.stringifyApiParams(params)})`,
+      );
 
       const { id } = params;
       const sq = await SurveyQuestion.findWithSurvey(id);
@@ -474,8 +489,12 @@ export class PublicEventsApiImpl extends ApiImpl {
       params: Params<'setSurveyQuestionsSortOrder'>,
       ctx: IApiContext,
     ): ResultsPromise<'setSurveyQuestionsSortOrder'> => {
-      const lh = new LogHelper(this, `setSurveyQuestionsSortOrder|${ctx.cid}`);
+      const lh = new LogHelper(this, `setSurveyQuestionsSortOrder|${ctx.cid}`, 'info');
       const { surveyId } = params;
+
+      lh.onStart(
+        `${ctx.userInfo} is setting survey questions order (${Utils.stringifyApiParams(params)})`,
+      );
 
       const survey = await Survey.findWithQuestions(surveyId);
       if (!survey) {
@@ -517,7 +536,11 @@ export class PublicEventsApiImpl extends ApiImpl {
       params: Params<'removeSurveyQuestion'>,
       ctx: IApiContext,
     ): ResultsPromise<'removeSurveyQuestion'> => {
-      const lh = new LogHelper(this, `removeSurveyQuestion|${ctx.cid}`);
+      const lh = new LogHelper(this, `removeSurveyQuestion|${ctx.cid}`, 'info');
+
+      lh.onStart(
+        `${ctx.userInfo} is removing survey question (${Utils.stringifyApiParams(params)})`,
+      );
 
       const { id } = params;
       const sq = await SurveyQuestion.findWithSurvey(id);
@@ -578,7 +601,7 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       const hash = Utils.md5(hashSrc);
 
-      lh.write(`received: [${hashSrc}] -> ${hash}`);
+      lh.write(`received from ${ctx.remoteAddress}: [${hashSrc}] -> ${hash}`);
 
       const { sourceType, sourceData } = params;
 

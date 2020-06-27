@@ -1,13 +1,16 @@
 import * as _ from 'lodash';
 import * as moment from 'moment';
-
 import { NextFunction, Request, Response } from 'express';
+import * as HttpErrors from 'http-errors';
+import { format } from 'util';
+
 import { GenericObject } from '../../interfaces/common-front';
 
 import { DateRange, ILogger, Image } from '../../interfaces/common';
 import { Utils } from '../../utils/utils';
-import { format } from 'util';
+
 import { ElapsedTime } from '../../utils/elapsed-time';
+import { IUser } from '../../services/users/models/user';
 
 export const ensureAuth = (req: Request, res: Response, next: NextFunction) => {
   if (req.isAuthenticated()) {
@@ -81,3 +84,23 @@ export const extractDateTimeRangeParams = (
 export function getParamByName(req: Request, name: string): string | undefined {
   return Array.isArray(req.params) ? undefined : req.params[name];
 }
+
+export const getRemoteAddress = (req: Request): string | undefined => {
+  let remoteAddress = req.connection.remoteAddress;
+  if (req.headers && req.headers['x-real-ip'] && _.isString(req.headers['x-real-ip'])) {
+    remoteAddress = req.headers['x-real-ip'];
+  }
+
+  return remoteAddress;
+};
+
+export const tryGetUser = (req: Request): IUser | null => {
+  return req.isAuthenticated() ? (req.user as IUser) : null;
+};
+
+export const getUser = (req: Request): IUser => {
+  const u = tryGetUser(req);
+  if (!u) throw new HttpErrors.Forbidden('Требуется вход в систему');
+
+  return u;
+};

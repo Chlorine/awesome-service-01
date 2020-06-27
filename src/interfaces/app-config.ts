@@ -1,5 +1,6 @@
 import { RedisOptions } from 'ioredis';
 import { Options as SMTPTransportOptions } from 'nodemailer/lib/smtp-transport';
+import { ClientOptions as MinioClientOptions } from 'minio';
 
 import { GenericObject } from './common-front';
 import { IWorkingFolderParams } from './common';
@@ -16,6 +17,17 @@ export interface IAppConfig {
     widgetLoadersUrlBase: string;
     visitorRegWidgetUrlBase: string;
     secureCookies: boolean;
+  };
+
+  uploads: {
+    maxFileSizeInBytes: number;
+    imageFileExtensions: string[];
+  };
+
+  s3: {
+    clientOptions: MinioClientOptions;
+    bucket: string;
+    publicUrlBase: string;
   };
 
   logs: {

@@ -5,7 +5,7 @@ import { ApiImpl } from '../../api/impl';
 import { Params, ResultsPromise } from '../../interfaces/common-front/users/api';
 import { IApiContext } from '../../api/index';
 
-import User from './models/user';
+import User, { IUser } from './models/user';
 import VerificationToken, { IVerificationToken } from './models/verification-token';
 
 import { checkAuth } from '../../api/impl-utils';
@@ -17,6 +17,19 @@ import { Core } from '../../core';
 
 import CONFIG from './../../../config';
 import { Utils } from '../../utils/utils';
+
+const signUserIn = async (user: IUser, ctx: IApiContext, lh: LogHelper) => {
+  if (ctx.req) {
+    await new Promise((resolve, reject) => {
+      ctx.req!.login(user, err => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+
+    lh.write(`User '${user.email}' is now logged in`);
+  }
+};
 
 export class UsersApiImpl extends ApiImpl {
   constructor() {
@@ -33,8 +46,10 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'createUser'>,
       ctx: IApiContext,
     ): ResultsPromise<'createUser'> => {
-      const lh = new LogHelper(this, `createUser|${ctx.cid}`);
+      const lh = new LogHelper(this, `createUser|${ctx.cid}`, 'info');
       const et = new ElapsedTime();
+
+      lh.onStart(`Remote address is '${ctx.remoteAddress}'`);
 
       const { email, password, firstName, middleName, lastName } = params;
 
@@ -54,7 +69,7 @@ export class UsersApiImpl extends ApiImpl {
 
       await u.save();
 
-      lh.write(`user '${email}' created (${et.getDiffStr()})`, 'info');
+      lh.write(`User '${email}' created (${et.getDiffStr()})`);
       et.reset();
 
       const t = new VerificationToken({ user: u, type: 'email' });
@@ -71,14 +86,7 @@ export class UsersApiImpl extends ApiImpl {
         });
       }
 
-      if (ctx.req) {
-        await new Promise((resolve, reject) => {
-          ctx.req!.login(u, err => {
-            if (err) return reject(err);
-            resolve();
-          });
-        });
-      }
+      await signUserIn(u, ctx, lh);
 
       return {
         user: u.asUserInfo(),
@@ -94,8 +102,10 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'confirmEmail'>,
       ctx: IApiContext,
     ): ResultsPromise<'confirmEmail'> => {
-      const lh = new LogHelper(this, `confirmEmail|${ctx.cid}`);
+      const lh = new LogHelper(this, `confirmEmail|${ctx.cid}`, 'info');
       const { token: tokenValue } = params;
+
+      lh.onStart(`Remote address is '${ctx.remoteAddress}'`);
 
       const userToken = await VerificationToken.findWithUser(tokenValue, 'email');
       if (!userToken) {
@@ -112,19 +122,11 @@ export class UsersApiImpl extends ApiImpl {
 
       user.emailConfirmed = true;
       await user.save();
+      await userToken.remove();
 
       lh.write(`User email '${user.email}' is now CONFIRMED`);
 
-      if (ctx.req) {
-        await new Promise((resolve, reject) => {
-          ctx.req!.login(user, err => {
-            if (err) return reject(err);
-            resolve();
-          });
-        });
-      }
-
-      await userToken.remove();
+      await signUserIn(user, ctx, lh);
 
       return {
         user: user.asUserInfo(),
@@ -155,8 +157,11 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'updateProfile'>,
       ctx: IApiContext,
     ): ResultsPromise<'updateProfile'> => {
-      const { id, firstName, middleName, lastName, birthday, gender } = params;
+      const lh = new LogHelper(this, `updateProfile|${ctx.cid}`, 'info');
 
+      lh.onStart(`${ctx.userInfo} is updating profile (${Utils.stringifyApiParams(params)})`);
+
+      const { id, firstName, middleName, lastName, birthday, gender } = params;
       const u = await getUser(ctx, id);
 
       Utils.setEntityProperty(u, 'firstName', firstName);
@@ -188,6 +193,10 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'changePassword'>,
       ctx: IApiContext,
     ): ResultsPromise<'changePassword'> => {
+      const lh = new LogHelper(this, `changePassword|${ctx.cid}`, 'info');
+
+      lh.write(`${ctx.userInfo} is trying to change password...`);
+
       const u = checkAuth(ctx);
       const { oldPassword, newPassword } = params;
 
@@ -197,6 +206,8 @@ export class UsersApiImpl extends ApiImpl {
       u.password = newPassword;
 
       await u.save();
+
+      lh.onSuccess(`${ctx.userInfo} has changed password`);
 
       return {};
     },
@@ -209,9 +220,11 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'requestPasswordReset'>,
       ctx: IApiContext,
     ): ResultsPromise<'requestPasswordReset'> => {
-      const lh = new LogHelper(this, `requestPasswordReset|${ctx.cid}`);
+      const lh = new LogHelper(this, `requestPasswordReset|${ctx.cid}`, 'info');
 
       const { email } = params;
+
+      lh.onStart(`${ctx.userInfo} is requesting password reset for '${email}'`);
 
       // поиск юзера
 
@@ -247,9 +260,11 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'resetPassword'>,
       ctx: IApiContext,
     ): ResultsPromise<'resetPassword'> => {
-      const lh = new LogHelper(this, `resetPassword|${ctx.cid}`);
+      const lh = new LogHelper(this, `resetPassword|${ctx.cid}`, 'info');
 
       const { token, password } = params;
+
+      lh.onStart(`${ctx.userInfo} is resetting password with token '${token}'`);
 
       const userToken = await VerificationToken.findWithUser(token, 'psw-reset');
       if (!userToken) {
@@ -267,19 +282,11 @@ export class UsersApiImpl extends ApiImpl {
       user.password = password;
 
       await user.save();
+      await userToken.remove();
 
       lh.write(`Password for user '${userToken.user.email}' was CHANGED`);
 
-      if (ctx.req) {
-        await new Promise((resolve, reject) => {
-          ctx.req!.login(user, err => {
-            if (err) return reject(err);
-            resolve();
-          });
-        });
-      }
-
-      await userToken.remove();
+      await signUserIn(user, ctx, lh);
 
       return {
         user: user.asUserInfo(),
@@ -290,11 +297,13 @@ export class UsersApiImpl extends ApiImpl {
       params: Params<'requestEmailConfirm'>,
       ctx: IApiContext,
     ): ResultsPromise<'requestEmailConfirm'> => {
-      const lh = new LogHelper(this, 'requestEmailConfirm');
+      const lh = new LogHelper(this, 'requestEmailConfirm', 'info');
       const et = new ElapsedTime();
 
       const u = checkAuth(ctx);
       if (u.emailConfirmed) throw new HttpErrors.BadRequest('Email already confirmed');
+
+      lh.onStart(`${ctx.userInfo} is requesting email confirmation`);
 
       await VerificationToken.deleteMany({ user: u, type: 'email' });
       const t = new VerificationToken({ user: u, type: 'email' });
