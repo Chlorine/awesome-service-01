@@ -48,31 +48,6 @@ export class Utils {
     });
   }
 
-  static pickProps<S, P extends keyof S, C extends Pick<S, Extract<keyof S, P>>>(
-    source: S,
-    props: P[],
-  ): C {
-    let clone: any = {};
-
-    Object.keys(source).forEach(propName => {
-      if (props.includes(<P>propName)) {
-        let p = <P>propName;
-        clone[p] = source[p];
-      }
-    });
-
-    return clone;
-  }
-
-  // /**
-  //  * experimental: создать объект типа E из некоторого объекта src
-  //  * @param src
-  //  * @param propNamesToPick
-  //  */
-  // static pickProps<E, EN extends keyof E>(src: any, propNamesToPick: EN[]): E {
-  //   return _.pick(src, propNamesToPick) as E;
-  // }
-
   /**
    * is nVal an integer value
    * @param nVal
@@ -311,7 +286,7 @@ export class Utils {
     }
   }
 
-  static deleteProperties<S, P extends keyof S, C = Pick<S, Exclude<keyof S, P>>>(
+  static omitProps<S, P extends keyof S, C = Pick<S, Exclude<keyof S, P>>>(
     source: S,
     props: P[],
   ): C {
@@ -328,7 +303,7 @@ export class Utils {
     return clone as C;
   }
 
-  static saveProperties<S, P extends keyof S, C extends Pick<S, Extract<keyof S, P>>>(
+  static pickProps<S, P extends keyof S, C extends Pick<S, Extract<keyof S, P>>>(
     source: S,
     props: P[],
   ): C {

@@ -95,7 +95,7 @@ export class UsersService {
     const srcImageInfo = await sh.metadata();
     this.logger.debug(
       `[setAvatar]: image loading time ${et.getDiffStr()} (${fileSize} byte(s))`,
-      srcImageInfo,
+      Utils.pickProps(srcImageInfo, ['format', 'width', 'height']),
     );
 
     et.reset();

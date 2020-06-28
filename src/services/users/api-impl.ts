@@ -67,6 +67,8 @@ export class UsersApiImpl extends ApiImpl {
       u.middleName = middleName;
       u.lastName = lastName;
 
+      u.avatar = await ctx.core.users.tryPrepareDefaultAvatarFor(u, ctx.cid);
+
       await u.save();
 
       lh.write(`User '${email}' created (${et.getDiffStr()})`);

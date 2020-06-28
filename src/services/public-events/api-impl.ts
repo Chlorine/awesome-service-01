@@ -204,7 +204,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       });
 
       return {
-        ...(Utils.deleteProperties(pgRes, ['docs']) as PaginationResults),
+        ...(Utils.omitProps(pgRes, ['docs']) as PaginationResults),
         events: pgRes.docs.map(e => e.asPublicEventInfo()),
       };
     },
@@ -328,7 +328,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       );
 
       return {
-        ...(Utils.deleteProperties(pgRes, ['docs']) as PaginationResults),
+        ...(Utils.omitProps(pgRes, ['docs']) as PaginationResults),
         surveys: pgRes.docs.map(s => s.asSurveyInfo()),
       };
     },
@@ -888,7 +888,7 @@ export class PublicEventsApiImpl extends ApiImpl {
       });
 
       return {
-        ...(Utils.deleteProperties(pgRes, ['docs']) as PaginationResults),
+        ...(Utils.omitProps(pgRes, ['docs']) as PaginationResults),
         visitors: pgRes.docs.map(v => v.asVisitorInfo()),
       };
     },
@@ -1028,7 +1028,7 @@ export class PublicEventsApiImpl extends ApiImpl {
 
       return {
         events: events.map(e =>
-          Utils.saveProperties(e.asPublicEventInfo(), ['id', 'name', 'start', 'end']),
+          Utils.pickProps(e.asPublicEventInfo(), ['id', 'name', 'start', 'end']),
         ),
       };
     },
