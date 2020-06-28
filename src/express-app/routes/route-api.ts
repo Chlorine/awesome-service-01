@@ -90,10 +90,12 @@ export const routeApi = (api: API): Router => {
     );
   };
 
-  const r = Router()
-    .use(cors({ origin: true, credentials: true }))
-    .use(bodyParser.json({ limit: '1mb' }))
+  const r = Router();
+  if (CONFIG.common.useCors) {
+    r.use(cors({ origin: true, credentials: true }));
+  }
 
+  r.use(bodyParser.json({ limit: '1mb' }))
     .post('/login', (req: Request, res: Response, next: NextFunction) => {
       passport.authenticate('local', (err: Error, user: IUser, info: any) => {
         if (err) return next(err);

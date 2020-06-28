@@ -12,6 +12,7 @@ export interface IAppConfig {
 
   common: {
     httpPort: number;
+    useCors: boolean;
     urlBaseForLinks: string;
     fastTrackUrlBase: string;
     widgetLoadersUrlBase: string;
