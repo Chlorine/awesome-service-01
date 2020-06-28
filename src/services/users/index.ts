@@ -15,7 +15,7 @@ import { UploadedFileHandlerParams } from '../../api/impl-utils';
 import CONFIG from '../../../config';
 
 const AVATAR_SIZE = 400;
-const AVATAR_JPG_QUALITY = 77;
+const AVATAR_JPG_QUALITY = 88;
 
 export class UsersService {
   logger = getLogger('Users');
