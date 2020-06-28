@@ -2,6 +2,8 @@ import * as HttpErrors from 'http-errors';
 import { nj, readTemplateFile } from '../../utils/template-helpers';
 import { join } from 'path';
 import * as _ from 'lodash';
+import * as sharp from 'sharp';
+import { FilterQuery } from 'mongoose';
 
 import { getLogger, LogHelper } from '../../utils/logger';
 import { ElapsedTime } from '../../utils/elapsed-time';
@@ -12,7 +14,8 @@ import { UploadedFileHandlerParams } from '../../api/impl-utils';
 
 import CONFIG from '../../../config';
 
-import { FilterQuery } from 'mongoose';
+const AVATAR_SIZE = 400;
+const AVATAR_JPG_QUALITY = 77;
 
 export class UsersService {
   logger = getLogger('Users');
@@ -28,6 +31,7 @@ export class UsersService {
     lh.onSuccess();
   }
 
+  // для passport
   async doAuth(
     email: string | null,
     password: string | null,
@@ -67,6 +71,7 @@ export class UsersService {
     objectId,
     cid,
     filePath,
+    fileSize,
     fileExt,
   }: UploadedFileHandlerParams): Promise<string> {
     if (objectId !== user.id) {
@@ -78,11 +83,50 @@ export class UsersService {
       throw new HttpErrors.InternalServerError('Cannot find user (как так-то?)');
     }
 
-    const fileName = MinioHelper.generateObjectName(fileExt);
+    // https://sharp.pixelplumbing.com/api-resize
+
+    const et = new ElapsedTime();
+
+    let fileName: string;
+    let imgContentType = 'image/jpeg';
+
+    et.reset();
+    let sh = sharp(filePath);
+    const srcImageInfo = await sh.metadata();
+    this.logger.debug(
+      `[setAvatar]: image loading time ${et.getDiffStr()} (${fileSize} byte(s))`,
+      srcImageInfo,
+    );
+
+    et.reset();
+    sh = sh.resize({
+      withoutEnlargement: true,
+      width: AVATAR_SIZE,
+      height: AVATAR_SIZE,
+      fit: 'cover',
+    });
+
+    if (fileExt === 'png') {
+      sh = sh.png();
+      imgContentType = 'image/png';
+      fileName = MinioHelper.generateObjectName('png');
+    } else {
+      sh = sh.jpeg({ quality: AVATAR_JPG_QUALITY });
+      fileName = MinioHelper.generateObjectName('jpg');
+    }
+
+    const img = await sh.toBuffer({ resolveWithObject: true });
+
+    this.logger.debug(
+      `[setAvatar]: image processing time ${et.getDiffStr()} (${fileSize} --> ${
+        img.info.size
+      } (${AVATAR_SIZE}x${AVATAR_SIZE}))`,
+    );
+
     const minioFileName = UsersService.AVATAR_FILE_PREFIX + fileName;
 
     await Utils.wrappedCall(
-      this.minio.uploadFile(filePath, minioFileName, cid),
+      this.minio.uploadBuffer(img.data, minioFileName, { 'content-type': imgContentType }, cid),
       'Загрузка файла в хранилище',
     );
 

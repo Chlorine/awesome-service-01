@@ -9,7 +9,8 @@ export type UploadedFileHandlerParams = {
   cid: string;
   objectId: string;
   filePath: string;
-  fileExt: string;
+  fileSize: number;
+  fileExt: string; // не изначальное, а задетекченное
 };
 
 export const checkAuth = (ctx: { user?: IUser }): IUser => {

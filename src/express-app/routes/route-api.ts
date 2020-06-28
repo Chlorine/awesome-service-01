@@ -227,7 +227,7 @@ export const routeApi = (api: API): Router => {
           _removeFiles(tempFilesToRemove);
           next(error);
         } else {
-          const firstFilePath = Object.values(files)[0].path;
+          const firstFile = Object.values(files)[0];
 
           api
             .processUploadedFile(
@@ -237,7 +237,8 @@ export const routeApi = (api: API): Router => {
                 user,
                 remoteAddress: getRemoteAddress(req),
               },
-              firstFilePath,
+              firstFile.path,
+              firstFile.size,
             )
             .then(results => {
               endResponseWithJson(res, API.makeResults(results));

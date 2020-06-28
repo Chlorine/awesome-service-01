@@ -5,6 +5,7 @@ import * as moment from 'moment';
 import { MongoClientOptions } from 'mongodb';
 import * as IORedis from 'ioredis';
 import * as mongoose from 'mongoose';
+import * as sharp from 'sharp';
 
 import { createExpressApp } from './express-app/app';
 import { Database, db } from './db/db';
@@ -26,6 +27,10 @@ import { endResponseWithJson } from './express-app/routes/_route-utils';
 import { PublicEventsService } from './services/public-events';
 import { UsersService } from './services/users';
 import { Mailer } from './services/mailer';
+
+//////////////////////////
+sharp.cache({ files: 0 });
+//////////////////////////
 
 const SocketNamespaces = {
   DEFAULT: '/default',

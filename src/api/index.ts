@@ -134,6 +134,7 @@ export class API {
   async processUploadedFile(
     params: UploadParamsBase & { user: IUser; remoteAddress?: string },
     filePath: string,
+    fileSize: number,
   ): Promise<{ publicUrl?: string }> {
     const { type, objectId, user, remoteAddress } = params;
 
@@ -157,6 +158,7 @@ export class API {
         objectId,
         cid,
         filePath,
+        fileSize,
         fileExt: fileType.ext,
       };
 
