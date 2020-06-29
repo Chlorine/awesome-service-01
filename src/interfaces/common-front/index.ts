@@ -35,6 +35,6 @@ export type PaginationResults = {
 };
 
 export type UploadParamsBase = {
-  type: 'user-avatar' | 'public-event-logo' | 'public-event-image';
+  type: 'user-avatar' | 'public-event-logo' | 'public-event-banner';
   objectId: string;
 };

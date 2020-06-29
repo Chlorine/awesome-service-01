@@ -39,6 +39,16 @@ export type PublicEventInfo = {
    * ID анкеты при регистрации посетителя
    */
   surveyId?: string | null;
+
+  /**
+   * URL картинки-логотипа
+   */
+  logo: string | null;
+
+  /**
+   * URL картинки-баннера
+   */
+  banner: string | null;
 };
 
 /**

@@ -2,12 +2,16 @@ import * as HttpErrors from 'http-errors';
 
 import { UserRole } from '../interfaces/common-front/users/index';
 import { IUser } from '../services/users/models/user';
+import { UploadParamsBase } from '../interfaces/common-front/index';
 
 export type UploadedFileHandlerParams = {
   user: IUser;
   remoteAddress?: string;
   cid: string;
+
   objectId: string;
+  objectType: UploadParamsBase['type'];
+
   filePath: string;
   fileSize: number;
   fileExt: string; // не изначальное, а задетекченное

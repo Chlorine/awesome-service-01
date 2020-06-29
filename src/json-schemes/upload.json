@@ -8,7 +8,7 @@
     "type": {
       "description": "Тип аплоадимого",
       "type": "string",
-      "enum": ["user-avatar", "public-event-logo", "public-event-image"]
+      "enum": ["user-avatar", "public-event-logo", "public-event-banner"]
     },
     "objectId": {
       "description": "ID объекта, к которому относится аплоажемое",

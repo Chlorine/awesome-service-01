@@ -8,6 +8,7 @@ import { PublicEventInfo } from '../../../interfaces/common-front/public-events/
 import { EventPlaceSchema, IEventPlace } from './place';
 import Survey, { ISurvey, ISurveyWithQuestions } from './survey';
 import { PublicEventFullInfo } from '../../../interfaces/common-front/public-events/index';
+import { makeEventMediaPublicUrl } from '../index';
 
 export interface IPublicEvent extends Document {
   user: IUser['_id'];
@@ -23,6 +24,9 @@ export interface IPublicEvent extends Document {
 
   createdAt: Date;
   updatedAt: Date;
+
+  logo?: string | null;
+  banner?: string | null;
 
   asPublicEventInfo(): PublicEventInfo;
 }
@@ -59,6 +63,16 @@ const PublicEventSchema = new Schema(
       ref: 'Survey',
       default: null,
     },
+
+    logo: {
+      type: String,
+      default: null,
+    },
+
+    banner: {
+      type: String,
+      default: null,
+    },
   },
 
   { timestamps: true },
@@ -79,6 +93,9 @@ PublicEventSchema.methods.asPublicEventInfo = function(): PublicEventInfo {
     end: moment.utc(this.end).toISOString(),
 
     surveyId: this.survey ? (this.populated('survey') ? this.survey.id : this.survey) : null,
+
+    logo: makeEventMediaPublicUrl(this.logo),
+    banner: makeEventMediaPublicUrl(this.banner),
   };
 };
 
@@ -91,6 +108,9 @@ PublicEventSchema.methods.asPublicEventFullInfo = function(): PublicEventFullInf
 
     start: moment.utc(this.start).toISOString(),
     end: moment.utc(this.end).toISOString(),
+
+    logo: makeEventMediaPublicUrl(this.logo),
+    banner: makeEventMediaPublicUrl(this.banner),
   };
 
   if (this.survey) {

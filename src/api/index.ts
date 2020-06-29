@@ -155,7 +155,10 @@ export class API {
       const handlerParams: UploadedFileHandlerParams = {
         user,
         remoteAddress,
+
         objectId,
+        objectType: type,
+
         cid,
         filePath,
         fileSize,
@@ -166,12 +169,9 @@ export class API {
         case 'user-avatar':
           publicUrl = await this.core.users.setAvatar(handlerParams);
           break;
-        case 'public-event-image':
+        case 'public-event-banner':
         case 'public-event-logo':
-          {
-            const event = await this.core.publicEvents.getEvent(objectId);
-            checkObjectOwnership({ user }, event);
-          }
+          publicUrl = await this.core.publicEvents.setEventMedia(handlerParams);
           break;
         default:
           // noinspection ExceptionCaughtLocallyJS

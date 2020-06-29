@@ -9,7 +9,7 @@ const loadConfig = (): IAppConfig => {
 
     common: {
       httpPort: Env.getInt('PORT', 3301),
-      useCors: Env.getBool('USE_CORS', false),
+      useCors: Env.getBool('USE_CORS', false), // nginx
       urlBaseForLinks: Env.getStr('URL_BASE_FOR_LINKS', 'https://cloudtickets.io'),
       fastTrackUrlBase: Env.getStr('FAST_TRACK_URL_BASE', 'https://fast-track.cloudtickets.io'),
       widgetLoadersUrlBase: Env.getStr(
