@@ -27,6 +27,7 @@ import { endResponseWithJson } from './express-app/routes/_route-utils';
 import { PublicEventsService } from './services/public-events';
 import { UsersService } from './services/users';
 import { Mailer } from './services/mailer';
+import { MinioHelper } from './utils/minio-helper';
 
 //////////////////////////
 sharp.cache({ files: 0 });
@@ -54,6 +55,7 @@ export class Core extends EventEmitter {
   api: API | undefined;
   wsServer: SocketIO.Server | undefined;
   redisClient: IORedis.Redis | undefined;
+  minio = new MinioHelper(getLogger('Minio'));
 
   private _daData: DaData | undefined;
   private _publicEvents: PublicEventsService | undefined;
@@ -115,11 +117,11 @@ export class Core extends EventEmitter {
       await this._mailer.init();
 
       // юзеры системы
-      this._users = new UsersService();
+      this._users = new UsersService(this.minio);
       await this._users.init();
 
       // проведение публичных событий
-      this._publicEvents = new PublicEventsService(mongoose.connection.db);
+      this._publicEvents = new PublicEventsService(mongoose.connection.db, this.minio);
       await this._publicEvents.init();
 
       // api

@@ -20,10 +20,9 @@ const AVATAR_JPG_QUALITY = 77;
 export class UsersService {
   logger = getLogger('Users');
 
-  minio = new MinioHelper(this.logger.createChild('Minio'));
   static readonly AVATAR_FILE_PREFIX = 'public/user-avatars/';
 
-  constructor() {}
+  constructor(public minio: MinioHelper) {}
 
   async init() {
     const lh = new LogHelper(this, 'init');

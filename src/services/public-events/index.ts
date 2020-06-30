@@ -14,12 +14,13 @@ const JPG_QUALITY = 77;
 export class PublicEventsService {
   logger = getLogger('PubEvents');
   mdb: MongoDatabase;
+  minio: MinioHelper;
 
-  minio = new MinioHelper(this.logger.createChild('Minio'));
   static readonly MEDIA_FILE_PREFIX = 'public/event-medias/';
 
-  constructor(mdb: MongoDatabase) {
+  constructor(mdb: MongoDatabase, minio: MinioHelper) {
     this.mdb = mdb;
+    this.minio = minio;
   }
 
   async init() {

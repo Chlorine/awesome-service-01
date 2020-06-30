@@ -35,6 +35,8 @@ import {
   SurveyQuestionAnswersInfo,
 } from '../../interfaces/common-front/public-events/index';
 
+import { PublicEventsService } from './index';
+
 export class PublicEventsApiImpl extends ApiImpl {
   constructor() {
     super('/api/public-events', 'API.PEvents');
@@ -1030,6 +1032,52 @@ export class PublicEventsApiImpl extends ApiImpl {
         events: events.map(e =>
           Utils.pickProps(e.asPublicEventInfo(), ['id', 'name', 'start', 'end']),
         ),
+      };
+    },
+
+    /**
+     * Удаление картинки мероприятия (логотип, баннер)
+     * @param params
+     * @param ctx
+     */
+    removeEventMedia: async (
+      params: Params<'removeEventMedia'>,
+      ctx: IApiContext,
+    ): ResultsPromise<'removeEventMedia'> => {
+      const lh = new LogHelper(this, `removeEventMedia|${ctx.cid}`, 'info');
+      const { eventId, mediaType } = params;
+
+      lh.onStart(`${ctx.userInfo} is removing event media (${Utils.stringifyApiParams(params)})`);
+
+      const event = await this.getEvent(eventId, ctx);
+
+      let fileToRemove = '';
+
+      if (mediaType === 'banner' && event.banner) {
+        fileToRemove = PublicEventsService.MEDIA_FILE_PREFIX + event.banner;
+      } else if (mediaType === 'logo' && event.logo) {
+        fileToRemove = PublicEventsService.MEDIA_FILE_PREFIX + event.logo;
+      }
+
+      const { error: removeErr } = await Utils.safeCall(
+        ctx.core.minio.removeFile(fileToRemove, ctx.cid),
+      );
+      if (removeErr) {
+        lh.write(`Removing existing file failed (${removeErr})`, 'warn');
+      }
+
+      if (mediaType === 'banner' && event.banner) {
+        event.banner = null;
+      } else if (mediaType === 'logo' && event.logo) {
+        event.logo = null;
+      }
+
+      await event.save();
+
+      lh.onSuccess();
+
+      return {
+        event: event.asPublicEventInfo(),
       };
     },
   };

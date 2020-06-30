@@ -1,0 +1,24 @@
+{
+  "schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Удаление картинки мероприятия (логотип, баннер)",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "eventId",
+    "mediaType"
+  ],
+  "properties": {
+    "eventId": {
+      "description": "ID мероприятия",
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{24}$"
+    },
+    "mediaType": {
+      "type": "string",
+      "enum": [
+        "logo",
+        "banner"
+      ]
+    }
+  }
+}

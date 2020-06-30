@@ -278,6 +278,19 @@ export type ApiActions = {
       events: Array<Pick<PublicEventInfo, 'id' | 'name' | 'start' | 'end'>>;
     };
   };
+  /**
+   * Удаление картинки мероприятия (логотип, баннер)
+   * Auth: user
+   */
+  removeEventMedia: {
+    params: {
+      eventId: string;
+      mediaType: 'banner' | 'logo';
+    };
+    results: {
+      event: PublicEventInfo;
+    };
+  };
 };
 
 export type Results<AN extends keyof ApiActions> = ApiActions[AN]['results'];
